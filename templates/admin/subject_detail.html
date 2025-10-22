@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student.full_name }} - Admin{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <a href="{{ url_for('admin.students') }}" class="text-blue-600 hover:text-blue-800 mb-4 inline-block">
+        <i class="fas fa-arrow-left mr-2"></i>Back to Students
+    </a>
+    <h1 class="text-3xl font-bold text-gray-800">{{ student.full_name }}</h1>
+    <p class="text-gray-600 mt-2">Student ID: {{ student.student_id or 'N/A' }}</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Edit Student Form -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-user-edit text-blue-600 mr-2"></i>Edit Student
+            </h2>
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                    {{ form.full_name(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
+                    {% if form.full_name.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.full_name.errors[0] }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    {{ form.email(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Class</label>
+                    {{ form.class_id(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent") }}
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition mb-3">
+                    <i class="fas fa-save mr-2"></i>Update Student
+                </button>
+            </form>
+
+            <!-- Delete Button -->
+            <form method="POST" action="{{ url_for('admin.delete_student', student_id=student.id) }}" 
+                  onsubmit="return confirm('Are you sure you want to delete this student? This action cannot be undone.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition">
+                    <i class="fas fa-trash-alt mr-2"></i>Delete Student
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Student Information -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Info Card -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-info-circle text-blue-600 mr-2"></i>Student Information
+            </h2>
+            <dl class="grid grid-cols-2 gap-6">
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <dt class="text-sm font-medium text-gray-500 mb-1">Class</dt>
+                    <dd class="text-lg font-bold text-gray-800">{{ student.school_class.name }}</dd>
+                    <dd class="text-xs text-gray-500">{{ student.school_class.level or 'N/A' }}</dd>
+                </div>
+                <div class="bg-yellow-50 p-4 rounded-lg">
+                    <dt class="text-sm font-medium text-gray-500 mb-1">Email</dt>
+                    <dd class="text-lg font-bold text-gray-800">{{ student.user.email }}</dd>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <dt class="text-sm font-medium text-gray-500 mb-1">Subjects Enrolled</dt>
+                    <dd class="text-3xl font-bold text-purple-600">{{ student.subjects|length }}</dd>
+                </div>
+                <div class="bg-red-50 p-4 rounded-lg">
+                    <dt class="text-sm font-medium text-gray-500 mb-1">Exams Taken</dt>
+                    <dd class="text-3xl font-bold text-red-600">{{ student.exams|length }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Subjects Enrolled -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-book text-green-600 mr-2"></i>Subjects Enrolled
+            </h2>
+            {% if student.subjects %}
+            <div class="flex flex-wrap gap-2">
+                {% for subject in student.subjects %}
+                <span class="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full">{{ subject.name }}</span>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-500 italic">No subjects assigned yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Exam Performance -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-chart-line text-yellow-600 mr-2"></i>Exam Performance
+            </h2>
+            {% if student.results %}
+            <table class="w-full border border-gray-200 text-sm">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="p-2 border">Exam</th>
+                        <th class="p-2 border">Score</th>
+                        <th class="p-2 border">Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in student.results %}
+                    <tr>
+                        <td class="p-2 border">{{ result.exam.title }}</td>
+                        <td class="p-2 border">{{ result.score }}</td>
+                        <td class="p-2 border">{{ result.grade }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-gray-500 italic text-center py-8">No exam results available.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

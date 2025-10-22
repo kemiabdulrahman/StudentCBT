@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student.full_name }} - Admin{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <a href="{{ url_for('admin.students') }}" class="text-blue-600 hover:text-blue-800 mb-4 inline-block">
+        <i class="fas fa-arrow-left mr-2"></i>Back to Students
+    </a>
+    <div class="flex items-center justify-between">
+        <div class="flex items-center">
+            <div class="h-20 w-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center mr-4">
+                <span class="text-white font-bold text-2xl">{{ student.first_name[0] }}{{ student.last_name[0] }}</span>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">{{ student.full_name }}</h1>
+                <p class="text-gray-600 mt-1">Student ID: {{ student.student_id }}</p>
+            </div>
+        </div>
+        <div class="flex gap-3">
+            <form method="POST" action="{{ url_for('admin.toggle_student_status', student_id=student.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="{% if student.user.is_active %}bg-orange-600 hover:bg-orange-700{% else %}bg-green-600 hover:bg-green-700{% endif %} text-white font-bold py-2 px-4 rounded-lg transition">
+                    <i class="fas fa-{% if student.user.is_active %}ban{% else %}check{% endif %} mr-1"></i>
+                    {% if student.user.is_active %}Deactivate{% else %}Activate{% endif %}
+                </button>
+            </form>
+            <form method="POST" action="{{ url_for('admin.delete_student', student_id=student.id) }}" 
+                  onsubmit="return confirm('Are you sure you want to delete this student? This will also delete their user account and all associated data.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition">
+                    <i class="fas fa-trash-alt mr-1"></i>Delete
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Student Info Card -->
+    <div class="lg:col-span-1 space-y-6">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-info-circle text-blue-600 mr-2"></i>Student Information
+            </h2>
+            <dl class="space-y-4">
+                <div class="border-b border-gray-200 pb-3">
+                    <dt class="text-sm font-medium text-gray-500">Full Name</dt>
+                    <dd class="text-lg font-bold text-gray-800 mt-1">{{ student.full_name }}</dd>
+                </div>
+                <div class="border-b border-gray-200 pb-3">
+                    <dt class="text-sm font-medium text-gray-500">Student ID</dt>
+                    <dd class="text-lg font-bold text-gray-800 mt-1">{{ student.student_id }}</dd>
+                </div>
+                <div class="border-b border-gray-200 pb-3">
+                    <dt class="text-sm font-medium text-gray-500">Email</dt>
+                    <dd class="text-sm text-gray-800 mt-1">{{ student.user.email }}</dd>
+                </div>
+                <div class="border-b border-gray-200 pb-3">
+                    <dt class="text-sm font-medium text-gray-500">Class</dt>
+                    <dd class="text-lg font-bold text-gray-800 mt-1">
+                        <a href="{{ url_for('admin.class_detail', class_id=student.school_class.id) }}" 
+                           class="text-purple-600 hover:text-purple-800">
+                            {{ student.school_class.name }}
+                        </a>
+                    </dd>
+                    {% if student.school_class.level %}
+                    <dd class="text-xs text-gray-500">{{ student.school_class.level }}</dd>
+                    {% endif %}
+                </div>
+                <div class="border-b border-gray-200 pb-3">
+                    <dt class="text-sm font-medium text-gray-500">Account Status</dt>
+                    <dd class="mt-2">
+                        {% if student.user.is_active %}
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            <i class="fas fa-check-circle mr-1"></i>Active
+                        </span>
+                        {% else %}
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                            <i class="fas fa-times-circle mr-1"></i>Inactive
+                        </span>
+                        {% endif %}
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Registered</dt>
+                    <dd class="text-sm text-gray-800 mt-1">{{ student.user.created_at.strftime('%B %d, %Y') }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-md p-6 text-white">
+            <h3 class="text-lg font-bold mb-4">Performance Summary</h3>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm">Total Exams Taken</span>
+                    <span class="text-2xl font-bold">{{ student.attempts|length }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm">Completed</span>
+                    <span class="text-xl font-bold">{{ student.attempts|selectattr('status', 'equalto', 'submitted')|list|length }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm">In Progress</span>
+                    <span class="text-xl font-bold">{{ student.attempts|selectattr('status', 'equalto', 'in_progress')|list|length }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exam Attempts -->
+    <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-file-alt text-red-600 mr-2"></i>Exam Attempts ({{ student.attempts|length }})
+            </h2>
+            
+            {% if student.attempts %}
+            <div class="space-y-4">
+                {% for attempt in student.attempts|sort(attribute='started_at', reverse=True) %}
+                <div class="border border-gray-200 rounded-lg p-5 hover:shadow-md transition">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1">
+                            <h3 class="font-bold text-lg text-gray-800">{{ attempt.exam.title }}</h3>
+                            <p class="text-sm text-gray-600 mt-1">{{ attempt.exam.subject.name }}</p>
+                        </div>
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full 
+                            {% if attempt.status == 'graded' %}bg-green-100 text-green-800
+                            {% elif attempt.status == 'submitted' %}bg-blue-100 text-blue-800
+                            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            {{ attempt.status|replace('_', ' ')|title }}
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-4 gap-3 text-sm">
+                        <div>
+                            <p class="text-gray-500 text-xs">Attempt #</p>
+                            <p class="font-medium text-gray-800">{{ attempt.attempt_number }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs">Started</p>
+                            <p class="font-medium text-gray-800">{{ attempt.started_at.strftime('%b %d, %Y') }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs">Score</p>
+                            <p class="font-bold text-gray-800">
+                                {% if attempt.status == 'graded' %}
+                                    {{ attempt.total_score }}/{{ attempt.exam.total_marks }}
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs">Percentage</p>
+                            <p class="font-bold 
+                                {% if attempt.percentage >= 75 %}text-green-600
+                                {% elif attempt.percentage >= 50 %}text-blue-600
+                                {% elif attempt.percentage >= 40 %}text-yellow-600
+                                {% else %}text-red-600{% endif %}">
+                                {% if attempt.status == 'graded' %}
+                                    {{ attempt.percentage|round(1) }}%
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {% if attempt.result %}
+                    <div class="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between">
+                        <div>
+                            <span class="px-3 py-1 text-sm font-semibold rounded-full 
+                                {% if attempt.result.grade == 'A' %}bg-green-100 text-green-800
+                                {% elif attempt.result.grade == 'B' %}bg-blue-100 text-blue-800
+                                {% elif attempt.result.grade == 'C' %}bg-yellow-100 text-yellow-800
+                                {% elif attempt.result.grade == 'D' %}bg-orange-100 text-orange-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                Grade: {{ attempt.result.grade }}
+                            </span>
+                            <span class="text-sm text-gray-600 ml-2">{{ attempt.result.remarks }}</span>
+                        </div>
+                        {% if attempt.result.published %}
+                        <span class="text-green-600 text-sm">
+                            <i class="fas fa-check-circle mr-1"></i>Published
+                        </span>
+                        {% else %}
+                        <span class="text-gray-500 text-sm">
+                            <i class="fas fa-clock mr-1"></i>Pending
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <i class="fas fa-clipboard-list text-gray-300 text-6xl mb-4"></i>
+                <p class="text-gray-500 text-lg">No exam attempts yet</p>
+                <p class="text-gray-400 text-sm mt-2">This student hasn't taken any exams</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

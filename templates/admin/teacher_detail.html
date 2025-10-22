@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}{{ teacher.full_name }} - Admin{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <a href="{{ url_for('admin.teachers') }}" class="text-green-600 hover:text-green-800 mb-4 inline-block">
+        <i class="fas fa-arrow-left mr-2"></i>Back to Teachers
+    </a>
+    <div class="flex items-center justify-between">
+        <div class="flex items-center">
+            <div class="h-20 w-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mr-4">
+                <span class="text-white font-bold text-2xl">{{ teacher.first_name[0] }}{{ teacher.last_name[0] }}</span>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">{{ teacher.full_name }}</h1>
+                <p class="text-gray-600 mt-1">Teacher ID: {{ teacher.teacher_id }}</p>
+            </div>
+        </div>
+        <div class="flex gap-3">
+            <form method="POST" action="{{ url_for('admin.toggle_teacher_status', teacher_id=teacher.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="{% if teacher.user.is_active %}bg-orange-600 hover:bg-orange-700{% else %}bg-green-600 hover:bg-green-700{% endif %} text-white font-bold py-2 px-4 rounded-lg transition">
+                    <i class="fas fa-{% if teacher.user.is_active %}ban{% else %}check{% endif %} mr-1"></i>
+                    {% if teacher.user.is_active %}Deactivate{% else %}Activate{% endif %}
+                </button>
+            </form>
+            <form method="POST" action="{{ url_for('admin.delete_teacher', teacher_id=teacher.id) }}" 
+                  onsubmit="return confirm('Are you sure you want to delete this teacher? This will also delete their user account and all associated data.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition">
+                    <i class="fas fa-trash-alt mr-1"></i>Delete
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Teacher Info Card -->
+    <div class="lg:col-span-1 space-y-6">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-info-circle text-green-600 mr-2"></i>Teacher Information
+            </h2>
+            <dl class="space-y-4">
+                <div class="border-b border-gray-200 pb-3">
+                    <dt class="text-sm font-medium text-gray-500">Full Name</dt>
+                    <dd class="text-lg font-bold text-gray-800 mt-1">{{ teacher.full_name }}</dd>
+                </div>
+                <div class="border-b border-gray-200 pb-3">
+                    <dt class="text-sm font-medium text-gray-500">Teacher ID</dt>
+                    <dd class="text-lg font-bold text-gray-800 mt-1">{{ teacher.teacher_id }}</dd>
+                </div>
+                <div class="border-b border-gray-200 pb-3">
+                    <dt class="text-sm font-medium text-gray-500">Email</dt>
+                    <dd class="text-sm text-gray-800 mt-1">{{ teacher.user.email }}</dd>
+                </div>
+                <div class="border-b border-gray-200 pb-3">
+                    <dt class="text-sm font-medium text-gray-500">Account Status</dt>
+                    <dd class="mt-2">
+                        {% if teacher.user.is_active %}
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            <i class="fas fa-check-circle mr-1"></i>Active
+                        </span>
+                        {% else %}
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                            <i class="fas fa-times-circle mr-1"></i>Inactive
+                        </span>
+                        {% endif %}
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Registered</dt>
+                    <dd class="text-sm text-gray-800 mt-1">{{ teacher.user.created_at.strftime('%B %d, %Y') }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-md p-6 text-white">
+            <h3 class="text-lg font-bold mb-4">Teaching Summary</h3>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm">Subjects Teaching</span>
+                    <span class="text-2xl font-bold">{{ teacher.subjects|length }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm">Exams Created</span>
+                    <span class="text-xl font-bold">{{ teacher.exams|length }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm">Active Exams</span>
+                    <span class="text-xl font-bold">{{ teacher.exams|selectattr('status', 'equalto', 'published')|list|length }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subjects and Exams -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Subjects List -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-book text-yellow-600 mr-2"></i>Subjects Teaching ({{ teacher.subjects|length }})
+            </h2>
+            
+            {% if teacher.subjects %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for subject in teacher.subjects %}
+                <div class="border-2 border-yellow-200 rounded-lg p-4 hover:shadow-lg hover:border-yellow-400 transition">
+                    <div class="flex items-start justify-between mb-2">
+                        <div>
+                            <h3 class="font-bold text-gray-800">{{ subject.name }}</h3>
+                            <p class="text-sm text-gray-600">{{ subject.code or 'N/A' }}</p>
+                        </div>
+                        <div class="bg-yellow-100 rounded-full p-2">
+                            <i class="fas fa-book text-yellow-600"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-gray-200">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-500">Class:</span>
+                            <a href="{{ url_for('admin.class_detail', class_id=subject.school_class.id) }}" 
+                               class="font-medium text-purple-600 hover:text-purple-800">
+                                {{ subject.school_class.name }}
+                            </a>
+                        </div>
+                        <div class="flex items-center justify-between text-sm mt-1">
+                            <span class="text-gray-500">Exams:</span>
+                            <span class="font-bold text-gray-800">{{ subject.exams|length }}</span>
+                        </div>
+                    </div>
+                    <a href="{{ url_for('admin.subject_detail', subject_id=subject.id) }}" 
+                       class="mt-3 block text-center bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-bold py-2 px-3 rounded-lg transition">
+                        <i class="fas fa-eye mr-1"></i>View Details
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <i class="fas fa-book-open text-gray-300 text-6xl mb-4"></i>
+                <p class="text-gray-500 text-lg">No subjects assigned yet</p>
+                <p class="text-gray-400 text-sm mt-2">Assign subjects to this teacher from the subjects page</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Exams List -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-file-alt text-red-600 mr-2"></i>Exams Created ({{ teacher.exams|length }})
+            </h2>
+            
+            {% if teacher.exams %}
+            <div class="space-y-3">
+                {% for exam in teacher.exams|sort(attribute='created_at', reverse=True) %}
+                <div class="border border-gray-200 rounded-lg p-5 hover:shadow-md transition">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1">
+                            <h3 class="font-bold text-lg text-gray-800">{{ exam.title }}</h3>
+                            <p class="text-sm text-gray-600 mt-1">{{ exam.description or 'No description' }}</p>
+                        </div>
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full 
+                            {% if exam.status == 'published' %}bg-green-100 text-green-800
+                            {% elif exam.status == 'closed' %}bg-red-100 text-red-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ exam.status|capitalize }}
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-5 gap-3 text-sm">
+                        <div>
+                            <p class="text-gray-500 text-xs">Subject</p>
+                            <p class="font-medium text-gray-800">{{ exam.subject.name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs">Class</p>
+                            <p class="font-medium text-gray-800">{{ exam.school_class.name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs">Term</p>
+                            <p class="font-medium text-gray-800">{{ exam.term.name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs">Questions</p>
+                            <p class="font-bold text-gray-800">{{ exam.questions|length }}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs">Attempts</p>
+                            <p class="font-bold text-gray-800">{{ exam.attempts|length }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3 text-xs text-gray-500">
+                        <i class="fas fa-calendar mr-1"></i>Created: {{ exam.created_at.strftime('%b %d, %Y') }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-12">
+                <i class="fas fa-file-excel text-gray-300 text-6xl mb-4"></i>
+                <p class="text-gray-500 text-lg">No exams created yet</p>
+                <p class="text-gray-400 text-sm mt-2">This teacher hasn't created any exams</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

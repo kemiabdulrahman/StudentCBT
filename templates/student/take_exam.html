@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}Taking Exam - {{ attempt.exam.title }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">{{ attempt.exam.title }}</h1>
+            <p class="text-gray-600">{{ attempt.exam.subject.name }} - Attempt #{{ attempt.attempt_number }}</p>
+        </div>
+        <div class="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-xl shadow-lg text-center min-w-[160px]">
+            <p class="text-sm tracking-wide uppercase">Time Remaining</p>
+            <p class="text-3xl font-bold" id="timer">--:--</p>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <!-- Questions Container - Show One at a Time -->
+    <div class="lg:col-span-3">
+        <form id="examForm" class="space-y-6">
+            {{ form.hidden_tag() if form else '' }}
+            
+            {% for question in questions %}
+            <div id="question{{ question.id }}" class="bg-white rounded-xl shadow-md p-6 relative border border-gray-200 question-card" style="display: {% if loop.index == 1 %}block{% else %}none{% endif %};">
+                <div class="flex items-start gap-3 mb-4">
+                    <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold min-w-[40px] text-center">
+                        {{ question.order }}
+                    </span>
+                    <div class="flex-1">
+                        <p class="text-gray-800 font-medium text-lg">{{ question.question_text }}</p>
+                        <div class="flex gap-2 mt-2">
+                            <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-semibold">
+                                {{ question.question_type|replace('_', ' ')|title }}
+                            </span>
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-semibold">
+                                {{ question.marks }} marks
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ml-12 space-y-3">
+                    {% if question.question_type == 'mcq' %}
+                        {% for option in ['a', 'b', 'c', 'd'] %}
+                        <label class="flex items-start p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">
+                            <input type="radio" name="q{{ question.id }}" value="{{ option|upper }}" 
+                                {% if existing_answers.get(question.id) == option|upper %}checked{% endif %}
+                                class="mt-1 mr-3 h-4 w-4 text-blue-600"
+                                onchange="saveAnswer({{ question.id }}, this.value)">
+                            <span class="flex-1">{{ question | attr('option_' ~ option) }}</span>
+                        </label>
+                        {% endfor %}
+                    
+                    {% elif question.question_type == 'true_false' %}
+                        {% for val in ['True','False'] %}
+                        <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">
+                            <input type="radio" name="q{{ question.id }}" value="{{ val }}"
+                                {% if existing_answers.get(question.id) == val %}checked{% endif %}
+                                class="mr-3 h-4 w-4 text-blue-600"
+                                onchange="saveAnswer({{ question.id }}, this.value)">
+                            <span class="font-medium">{{ val }}</span>
+                        </label>
+                        {% endfor %}
+                    
+                    {% elif question.question_type == 'short_answer' %}
+                        <textarea id="answer{{ question.id }}" rows="4"
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Type your answer here..."
+                            onblur="saveAnswer({{ question.id }}, this.value)">{{ existing_answers.get(question.id, '') }}</textarea>
+                    
+                    {% elif question.question_type == 'essay' %}
+                        <textarea id="answer{{ question.id }}" rows="8"
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Write your essay here..."
+                            onblur="saveAnswer({{ question.id }}, this.value)">{{ existing_answers.get(question.id, '') }}</textarea>
+                    {% endif %}
+                    
+                    <div class="mt-2 text-xs text-gray-500 flex items-center gap-2" id="status{{ question.id }}">
+                        <i class="fas fa-spinner fa-spin text-gray-400 hidden"></i>
+                        <span><i class="fas fa-check-circle text-green-500"></i> Auto-saved</span>
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="flex justify-between items-center mt-6 pt-4 border-t">
+                    <button type="button" onclick="navigateQuestion(-1)" 
+                        class="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        id="prevBtn" {% if loop.index == 1 %}disabled{% endif %}>
+                        <i class="fas fa-chevron-left mr-2"></i>Previous
+                    </button>
+                    
+                    <span class="text-sm text-gray-600 font-medium">
+                        Question {{ question.order }} of {{ questions|length }}
+                    </span>
+                    
+                    <button type="button" onclick="navigateQuestion(1)" 
+                        class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        id="nextBtn" {% if loop.index == questions|length %}disabled{% endif %}>
+                        Next<i class="fas fa-chevron-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </form>
+    </div>
+    
+    <!-- Question Navigator -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-xl shadow-md p-6 sticky top-4">
+            <!-- Timer Display (Mobile-friendly) -->
+            <div class="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-3 rounded-lg shadow-lg text-center mb-6 lg:hidden">
+                <p class="text-xs tracking-wide uppercase">Time Left</p>
+                <p class="text-2xl font-bold" id="timer-mobile">--:--</p>
+            </div>
+
+            <h3 class="font-bold text-gray-800 mb-4">Question Navigator</h3>
+            <div class="grid grid-cols-5 gap-2 mb-6">
+                {% for question in questions %}
+                <button type="button" onclick="goToQuestion({{ loop.index0 }})" id="nav{{ question.id }}"
+                    class="aspect-square flex items-center justify-center border-2 border-gray-300 rounded-lg hover:border-blue-500 transition font-semibold text-sm nav-btn"
+                    data-question-index="{{ loop.index0 }}">
+                    {{ question.order }}
+                </button>
+                {% endfor %}
+            </div>
+            
+            <div class="space-y-2 text-xs mb-6">
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 border-2 border-gray-300 rounded"></div>
+                    <span class="text-gray-600">Not Answered</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 bg-blue-100 border-2 border-blue-500 rounded"></div>
+                    <span class="text-gray-600">Answered</span>
+                </div>
+            </div>
+            
+            <button onclick="submitExam()" 
+                class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition">
+                <i class="fas fa-paper-plane mr-2"></i>Submit Exam
+            </button>
+            
+            <p class="text-xs text-gray-500 text-center mt-3">
+                <i class="fas fa-info-circle mr-1"></i>Answers are auto-saved
+            </p>
+        </div>
+    </div>
+</div>
+
+<form id="submitForm" method="POST" action="{{ url_for('student.submit_exam', attempt_id=attempt.id) }}" style="display:none;">
+    {{ form.hidden_tag() if form else '' }}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let remainingSeconds = {{ remaining_seconds }};
+const timerElement = document.getElementById('timer');
+const timerMobileElement = document.getElementById('timer-mobile');
+let currentQuestionIndex = 0;
+const totalQuestions = {{ questions|length }};
+const questionIds = [{% for question in questions %}{{ question.id }}{% if not loop.last %},{% endif %}{% endfor %}];
+
+// Timer
+function updateTimer() {
+    const minutes = Math.floor(remainingSeconds / 60);
+    const seconds = remainingSeconds % 60;
+    const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    timerElement.textContent = timeString;
+    if (timerMobileElement) {
+        timerMobileElement.textContent = timeString;
+    }
+    
+    if (remainingSeconds <= 300) {
+        timerElement.parentElement.classList.add('animate-pulse');
+        if (timerMobileElement) {
+            timerMobileElement.parentElement.classList.add('animate-pulse');
+        }
+    }
+    
+    if (remainingSeconds <= 0) {
+        alert('Time is up! Submitting your exam...');
+        document.getElementById('submitForm').submit();
+        return;
+    }
+    remainingSeconds--;
+}
+setInterval(updateTimer, 1000);
+updateTimer();
+
+// Navigation
+function navigateQuestion(direction) {
+    const newIndex = currentQuestionIndex + direction;
+    if (newIndex >= 0 && newIndex < totalQuestions) {
+        goToQuestion(newIndex);
+    }
+}
+
+function goToQuestion(index) {
+    // Hide current question
+    document.querySelectorAll('.question-card').forEach((card, i) => {
+        card.style.display = i === index ? 'block' : 'none';
+    });
+    
+    currentQuestionIndex = index;
+    
+    // Update navigation buttons
+    document.getElementById('prevBtn').disabled = index === 0;
+    document.getElementById('nextBtn').disabled = index === totalQuestions - 1;
+    
+    // Update navigator highlighting
+    document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+        if (i === index) {
+            btn.classList.add('ring-2', 'ring-blue-500', 'bg-blue-50');
+        } else {
+            btn.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-50');
+        }
+    });
+}
+
+// Save Answer
+function saveAnswer(questionId, answer) {
+    const status = document.getElementById('status' + questionId);
+    status.innerHTML = '<i class="fas fa-spinner fa-spin text-gray-400"></i> Saving...';
+    
+    fetch(`/student/attempts/{{ attempt.id }}/save-answer`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+        },
+        body: JSON.stringify({ question_id: questionId, answer_text: answer })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            status.innerHTML = '<i class="fas fa-check-circle text-green-500"></i> Saved';
+            document.getElementById('nav' + questionId).classList.add('bg-blue-100','border-blue-500');
+        }
+    })
+    .catch(() => {
+        status.innerHTML = '<i class="fas fa-exclamation-circle text-red-500"></i> Save failed';
+    });
+}
+
+// Submit
+function submitExam() {
+    if (confirm('Submit your exam? You cannot change your answers after submission.')) {
+        window.removeEventListener('beforeunload', beforeUnloadHandler);
+        document.getElementById('submitForm').submit();
+    }
+}
+
+// Prevent accidental exit
+function beforeUnloadHandler(e) {
+    e.preventDefault();
+    e.returnValue = '';
+}
+window.addEventListener('beforeunload', beforeUnloadHandler);
+
+// Initialize first question as current
+goToQuestion(0);
+</script>
+{% endblock %}

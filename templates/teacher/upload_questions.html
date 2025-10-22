@@ -1,0 +1,23 @@
+<!-- templates/teacher/upload_questions.html -->
+{% extends "base.html" %}
+{% block title %}Upload Questions{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white shadow-md rounded p-6">
+    <h2 class="text-xl font-bold mb-4">Upload Questions for {{ exam.title }}</h2>
+
+    <form method="post" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+
+        <div class="mb-4">
+            {{ form.file.label(class="block text-sm font-medium text-gray-700") }}
+            {{ form.file(class="mt-1 block w-full border border-gray-300 rounded p-2") }}
+        </div>
+
+        <button type="submit"
+            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Upload
+        </button>
+    </form>
+</div>
+{% endblock %}

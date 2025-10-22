@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Result Details - {{ result.attempt.exam.title }}{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <a href="{{ url_for('student.results') }}" class="text-blue-600 hover:text-blue-800 mb-4 inline-block">
+        <i class="fas fa-arrow-left mr-2"></i>Back to Results
+    </a>
+    <h1 class="text-3xl font-bold text-gray-800">{{ result.attempt.exam.title }}</h1>
+    <p class="text-gray-600 mt-2">Detailed Results</p>
+</div>
+
+<!-- Result Summary -->
+<div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-8 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 text-center">
+        <div>
+            <p class="text-blue-100 text-sm mb-1">Total Marks</p>
+            <p class="text-3xl font-bold">{{ result.total_marks }}</p>
+        </div>
+        <div>
+            <p class="text-blue-100 text-sm mb-1">Marks Obtained</p>
+            <p class="text-3xl font-bold">{{ result.marks_obtained }}</p>
+        </div>
+        <div>
+            <p class="text-blue-100 text-sm mb-1">Percentage</p>
+            <p class="text-3xl font-bold">{{ "%.1f"|format(result.percentage) }}%</p>
+        </div>
+        <div>
+            <p class="text-blue-100 text-sm mb-1">Grade</p>
+            <p class="text-3xl font-bold">{{ result.grade }}</p>
+        </div>
+        <div>
+            <p class="text-blue-100 text-sm mb-1">Remarks</p>
+            <p class="text-3xl font-bold">{{ result.remarks }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Question by Question Breakdown -->
+<div class="bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-xl font-bold text-gray-800 mb-4">Question Breakdown</h2>
+    <div class="space-y-6">
+        {% for ans in result.answers %}
+        <div class="p-4 rounded-lg border 
+            {% if ans.is_correct %}border-green-300 bg-green-50
+            {% else %}border-red-300 bg-red-50{% endif %}">
+            
+            <p class="font-medium text-gray-800 mb-2">Q{{ loop.index }}. {{ ans.question.text }}</p>
+            <p class="text-sm text-gray-600 mb-2">Your Answer: {{ ans.selected_option }}</p>
+            <p class="text-sm text-gray-600 mb-2">Correct Answer: {{ ans.question.correct_option }}</p>
+            
+            {% if ans.explanation %}
+            <p class="text-xs text-gray-500 italic">Explanation: {{ ans.explanation }}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
