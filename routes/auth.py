@@ -8,11 +8,10 @@ auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/')
 def index():
+    """Redirect to appropriate dashboard based on user role"""
     if current_user.is_authenticated:
         if current_user.role == 'admin':
             return redirect(url_for('admin.dashboard'))
-        elif current_user.role == 'teacher':
-            return redirect(url_for('teacher.dashboard'))
         elif current_user.role == 'student':
             return redirect(url_for('student.dashboard'))
     return redirect(url_for('auth.login'))
@@ -34,18 +33,20 @@ def login():
                 return redirect(url_for('auth.login'))
             
             login_user(user)
-            
+
             # Redirect to appropriate dashboard
             next_page = request.args.get('next')
             if next_page:
                 return redirect(next_page)
-            
+
             if user.role == 'admin':
                 return redirect(url_for('admin.dashboard'))
-            elif user.role == 'teacher':
-                return redirect(url_for('teacher.dashboard'))
             elif user.role == 'student':
                 return redirect(url_for('student.dashboard'))
+            else:
+                flash('Invalid user role.', 'danger')
+                logout_user()
+                return redirect(url_for('auth.login'))
         else:
             flash('Invalid email or password. Please try again.', 'danger')
     
