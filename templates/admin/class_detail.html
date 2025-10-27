@@ -142,17 +142,13 @@
             {% if school_class.subjects %}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {% for subject in school_class.subjects %}
-                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h3 class="font-bold text-gray-800">{{ subject.name }}</h3>
-                            <p class="text-sm text-gray-600">{{ subject.code }}</p>
-                            <p class="text-xs text-gray-500 mt-1">Teacher: {{ subject.teacher.full_name }}</p>
-                        </div>
-                        <a href="{{ url_for('admin.subject_detail', subject_id=subject.id) }}" 
-                           class="text-purple-600 hover:text-purple-800">
-                            <i class="fas fa-arrow-right"></i>
-                        </a>
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div>
+                        <h3 class="font-bold text-gray-800">{{ subject.name }}</h3>
+                        <p class="text-sm text-gray-600">{{ subject.code }}</p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-list-alt mr-1"></i>{{ subject.exams|length }} exam(s)
+                        </p>
                     </div>
                 </div>
                 {% endfor %}
