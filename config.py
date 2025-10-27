@@ -1,15 +1,23 @@
 import os
 from datetime import timedelta
 
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
 class Config:
     """Base configuration"""
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URI') or 'sqlite:///instance/cbt_app.db'
+    SQLALCHEMY_DATABASE_URI = (
+        os.environ.get('DATABASE_URI')
+        or f"sqlite:///{os.path.join(BASE_DIR, 'instance', 'cbt_app.db')}"
+    )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # Ensure instance folder exists
+    os.makedirs(os.path.join(BASE_DIR, 'instance'), exist_ok=True)
 
     # Session configuration
     PERMANENT_SESSION_LIFETIME = timedelta(hours=2)
-    SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+    SESSION_COOKIE_SECURE = False
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
 
@@ -26,7 +34,7 @@ class Config:
     INSTITUTION_NAME = os.environ.get('INSTITUTION_NAME') or 'CDSSM Ibadan'
 
     # File upload settings
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024
     UPLOAD_EXTENSIONS = ['.xlsx', '.xls', '.docx', '.pdf']
 
 
