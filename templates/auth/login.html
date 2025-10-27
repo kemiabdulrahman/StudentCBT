@@ -1,33 +1,87 @@
 {% extends "base.html" %}
 
-{% block title %}Login | CBT System{% endblock %}
+{% block title %}Login - Secure Access{% endblock %}
 
 {% block content %}
-<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
-    <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
-    <form method="POST" action="{{ url_for('auth.login') }}" class="space-y-4">
-        {{ form.hidden_tag() }}
-
-        <div>
-            {{ form.email.label(class="block mb-1 text-sm font-medium text-gray-700") }}
-            {{ form.email(class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500") }}
-            {% if form.email.errors %}
-                <p class="text-red-500 text-sm mt-1">{{ form.email.errors[0] }}</p>
-            {% endif %}
+<div class="min-h-[70vh] flex items-center justify-center py-12">
+    <div class="max-w-md w-full">
+        <!-- Header Section -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl shadow-xl mb-4">
+                <i class="fas fa-laptop-code text-white text-3xl"></i>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">{{ institution_name }}</h2>
+            <p class="text-gray-600 font-medium">Computer-Based Testing Platform</p>
+            <p class="text-sm text-gray-500 mt-2">Secure Login Portal</p>
         </div>
 
-        <div>
-            {{ form.password.label(class="block mb-1 text-sm font-medium text-gray-700") }}
-            {{ form.password(class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500") }}
-            {% if form.password.errors %}
-                <p class="text-red-500 text-sm mt-1">{{ form.password.errors[0] }}</p>
-            {% endif %}
+        <!-- Login Form -->
+        <div class="bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
+            <div class="mb-6 pb-4 border-b border-gray-200">
+                <h3 class="text-xl font-semibold text-gray-800">Sign In</h3>
+                <p class="text-sm text-gray-600 mt-1">Enter your credentials to access the system</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('auth.login') }}" class="space-y-5">
+                {{ form.hidden_tag() }}
+
+                <div>
+                    {{ form.email.label(class="block mb-2 text-sm font-semibold text-gray-700 flex items-center") }}
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                            <i class="fas fa-envelope"></i>
+                        </span>
+                        {{ form.email(class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition", placeholder="your.email@example.com") }}
+                    </div>
+                    {% if form.email.errors %}
+                        <p class="text-red-600 text-xs mt-2 flex items-center">
+                            <i class="fas fa-exclamation-circle mr-1"></i>{{ form.email.errors[0] }}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    {{ form.password.label(class="block mb-2 text-sm font-semibold text-gray-700") }}
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                            <i class="fas fa-lock"></i>
+                        </span>
+                        {{ form.password(class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition", placeholder="Enter your password") }}
+                    </div>
+                    {% if form.password.errors %}
+                        <p class="text-red-600 text-xs mt-2 flex items-center">
+                            <i class="fas fa-exclamation-circle mr-1"></i>{{ form.password.errors[0] }}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <button type="submit"
+                        class="w-full cbt-gradient text-white py-3.5 px-4 rounded-xl hover:shadow-lg transition font-semibold tracking-wide flex items-center justify-center space-x-2">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Sign In to CBT System</span>
+                </button>
+            </form>
+
+            <div class="mt-6 pt-4 border-t border-gray-200">
+                <div class="flex items-center justify-center space-x-2 text-xs text-gray-500">
+                    <i class="fas fa-shield-alt text-green-600"></i>
+                    <span>Secure connection established</span>
+                </div>
+            </div>
         </div>
 
-        <button type="submit"
-                class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700">
-            Login
-        </button>
-    </form>
+        <!-- Info Section -->
+        <div class="mt-6 bg-blue-50 border border-blue-100 rounded-xl p-4">
+            <div class="flex items-start space-x-3">
+                <i class="fas fa-info-circle text-blue-600 mt-0.5"></i>
+                <div class="text-sm text-blue-800">
+                    <p class="font-semibold mb-1">Default Admin Credentials:</p>
+                    <p class="font-mono text-xs">Email: admin@cbt.com</p>
+                    <p class="font-mono text-xs">Password: admin123</p>
+                    <p class="text-xs text-blue-600 mt-2 italic">Please change these credentials in production</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

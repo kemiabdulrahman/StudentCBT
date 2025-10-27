@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import extensions and models
-from extensions import mail
-from models import db, User
+from extensions import mail, csrf, migrate, db
+from models import User
 
 def create_app(config_name=None):
     """Application factory pattern"""
@@ -24,6 +24,8 @@ def create_app(config_name=None):
     # Initialize extensions
     db.init_app(app)
     mail.init_app(app)
+    csrf.init_app(app)
+    migrate.init_app(app, db)
 
     # Initialize Flask-Login
     login_manager = LoginManager()
