@@ -3,142 +3,395 @@
 {% block title %}Admin Dashboard - CBT System{% endblock %}
 
 {% block content %}
+<!-- Welcome Header -->
 <div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
-    <p class="text-gray-600 mt-2">Welcome back! Here's an overview of your system.</p>
-</div>
-
-<!-- Statistics Cards -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-    <!-- Students -->
-    <a href="{{ url_for('admin.students') }}"
-       class="block bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500 hover:shadow-lg hover:-translate-y-1 transition transform">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-600 text-sm">Total Students</p>
-                <p class="text-3xl font-bold text-gray-800">{{ total_students }}</p>
+    <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+                <div class="bg-gradient-to-br from-blue-600 to-blue-800 p-3 rounded-xl shadow-lg mr-4">
+                    <i class="fas fa-shield-alt text-white text-2xl"></i>
+                </div>
+                Administrator Control Panel
+            </h1>
+            <p class="text-gray-600 mt-2 ml-16">System overview and management tools</p>
+        </div>
+        <div class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-xl shadow-lg">
+            <div class="text-xs uppercase tracking-wide font-semibold">System Status</div>
+            <div class="text-xl font-bold flex items-center mt-1">
+                <i class="fas fa-circle text-green-200 text-xs mr-2 animate-pulse"></i>
+                Online & Operational
             </div>
-            <i class="fas fa-user-graduate text-4xl text-blue-500"></i>
         </div>
-    </a>
-
-    <!-- Teachers -->
-    <a href="{{ url_for('admin.teachers') }}"
-       class="block bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500 hover:shadow-lg hover:-translate-y-1 transition transform">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-600 text-sm">Total Teachers</p>
-                <p class="text-3xl font-bold text-gray-800">{{ total_teachers }}</p>
-            </div>
-            <i class="fas fa-chalkboard-teacher text-4xl text-green-500"></i>
-        </div>
-    </a>
-
-    <!-- Classes -->
-    <a href="{{ url_for('admin.classes') }}"
-       class="block bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500 hover:shadow-lg hover:-translate-y-1 transition transform">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-600 text-sm">Total Classes</p>
-                <p class="text-3xl font-bold text-gray-800">{{ total_classes }}</p>
-            </div>
-            <i class="fas fa-door-open text-4xl text-purple-500"></i>
-        </div>
-    </a>
-
-    <!-- Subjects -->
-    <a href="{{ url_for('admin.subjects') }}"
-       class="block bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500 hover:shadow-lg hover:-translate-y-1 transition transform">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-600 text-sm">Total Subjects</p>
-                <p class="text-3xl font-bold text-gray-800">{{ total_subjects }}</p>
-            </div>
-            <i class="fas fa-book text-4xl text-yellow-500"></i>
-        </div>
-    </a>
-
-    <!-- Exams -->
-    <!-- <a href="{{ url_for('admin.exams') }}"
-       class="block bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500 hover:shadow-lg hover:-translate-y-1 transition transform">
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-gray-600 text-sm">Total Exams</p>
-                <p class="text-3xl font-bold text-gray-800">{{ total_exams }}</p>
-            </div>
-            <i class="fas fa-file-alt text-4xl text-red-500"></i>
-        </div>
-    </a> -->
-</div>
-
-
-<!-- Quick Actions -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">
-            <i class="fas fa-tasks mr-2 text-blue-600"></i>Quick Actions
-        </h2>
-        <div class="space-y-3">
-            <a href="{{ url_for('admin.upload_students') }}" class="block bg-blue-50 hover:bg-blue-100 p-4 rounded-lg transition">
-                <i class="fas fa-upload text-blue-600 mr-3"></i>
-                <span class="font-medium">Upload Students from Excel</span>
-            </a>
-            <a href="{{ url_for('admin.upload_teachers') }}" class="block bg-green-50 hover:bg-green-100 p-4 rounded-lg transition">
-                <i class="fas fa-upload text-green-600 mr-3"></i>
-                <span class="font-medium">Upload Teachers from Excel</span>
-            </a>
-            <a href="{{ url_for('admin.sessions') }}" class="block bg-purple-50 hover:bg-purple-100 p-4 rounded-lg transition">
-                <i class="fas fa-calendar-alt text-purple-600 mr-3"></i>
-                <span class="font-medium">Manage Academic Sessions</span>
-            </a>
-            <a href="{{ url_for('admin.results') }}" class="block bg-yellow-50 hover:bg-yellow-100 p-4 rounded-lg transition">
-                <i class="fas fa-chart-line text-yellow-600 mr-3"></i>
-                <span class="font-medium">Publish Results</span>
-            </a>
-        </div>
-    </div>
-
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">
-            <i class="fas fa-calendar text-green-600 mr-2"></i>Recent Academic Sessions
-        </h2>
-        {% if sessions %}
-        <div class="space-y-3">
-            {% for session in sessions %}
-            <div class="border-l-4 {% if session.is_current %}border-green-500{% else %}border-gray-300{% endif %} pl-4 py-2">
-                <p class="font-medium text-gray-800">{{ session.name }}</p>
-                <p class="text-sm text-gray-600">
-                    {{ session.start_date.strftime('%b %d, %Y') }} - {{ session.end_date.strftime('%b %d, %Y') }}
-                </p>
-                {% if session.is_current %}
-                <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded mt-1">Current</span>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="text-gray-500 italic">No sessions created yet.</p>
-        {% endif %}
     </div>
 </div>
 
-<!-- Recent Classes -->
-<div class="bg-white rounded-lg shadow-md p-6">
-    <h2 class="text-xl font-bold text-gray-800 mb-4">
-        <i class="fas fa-door-open text-purple-600 mr-2"></i>Recent Classes
+<!-- Statistics Overview -->
+<div class="mb-8">
+    <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+        <i class="fas fa-chart-pie text-blue-600 mr-2"></i>
+        System Statistics
     </h2>
-    {% if classes %}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {% for class in classes %}
-        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-            <h3 class="font-bold text-lg text-gray-800">{{ class.name }}</h3>
-            <p class="text-sm text-gray-600 mt-1">Level: {{ class.level or 'N/A' }}</p>
-            <p class="text-sm text-gray-500 mt-2">{{ class.students|length }} students</p>
-        </div>
-        {% endfor %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Students -->
+        <a href="{{ url_for('admin.students') }}" class="block">
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white cbt-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-blue-100 text-sm font-medium mb-1">Total Students</p>
+                        <p class="text-4xl font-bold">{{ total_students }}</p>
+                        <p class="text-xs text-blue-100 mt-2">Enrolled</p>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-4 rounded-xl">
+                        <i class="fas fa-user-graduate text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+
+        <!-- Teachers -->
+        <a href="{{ url_for('admin.teachers') }}" class="block">
+            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white cbt-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-green-100 text-sm font-medium mb-1">Total Teachers</p>
+                        <p class="text-4xl font-bold">{{ total_teachers }}</p>
+                        <p class="text-xs text-green-100 mt-2">Active</p>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-4 rounded-xl">
+                        <i class="fas fa-chalkboard-teacher text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+
+        <!-- Classes -->
+        <a href="{{ url_for('admin.classes') }}" class="block">
+            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white cbt-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-purple-100 text-sm font-medium mb-1">Total Classes</p>
+                        <p class="text-4xl font-bold">{{ total_classes }}</p>
+                        <p class="text-xs text-purple-100 mt-2">Configured</p>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-4 rounded-xl">
+                        <i class="fas fa-door-open text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+
+        <!-- Subjects -->
+        <a href="{{ url_for('admin.subjects') }}" class="block">
+            <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-6 text-white cbt-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-orange-100 text-sm font-medium mb-1">Total Subjects</p>
+                        <p class="text-4xl font-bold">{{ total_subjects }}</p>
+                        <p class="text-xs text-orange-100 mt-2">Available</p>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-4 rounded-xl">
+                        <i class="fas fa-book text-3xl"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
     </div>
-    {% else %}
-    <p class="text-gray-500 italic">No classes created yet.</p>
-    {% endif %}
+</div>
+
+
+<!-- Management Sections - Segregated Tasks -->
+<div class="mb-8">
+    <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+        <i class="fas fa-cogs text-blue-600 mr-2"></i>
+        Management Sections
+    </h2>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- User Management Section -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4">
+                <h3 class="font-bold text-lg flex items-center">
+                    <i class="fas fa-users mr-2"></i>
+                    User Management
+                </h3>
+                <p class="text-xs text-blue-100 mt-1">Manage students and teachers</p>
+            </div>
+            <div class="p-4 space-y-2">
+                <a href="{{ url_for('admin.students') }}" class="block bg-blue-50 hover:bg-blue-100 p-3 rounded-lg transition group">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-user-graduate text-blue-600 mr-3"></i>
+                            <span class="font-medium text-gray-700">View Students</span>
+                        </div>
+                        <i class="fas fa-arrow-right text-gray-400 group-hover:text-blue-600 transition"></i>
+                    </div>
+                </a>
+                <a href="{{ url_for('admin.upload_students') }}" class="block bg-gray-50 hover:bg-gray-100 p-3 rounded-lg transition group">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-file-upload text-blue-600 mr-3"></i>
+                            <span class="font-medium text-gray-700">Upload Students</span>
+                        </div>
+                        <i class="fas fa-arrow-right text-gray-400 group-hover:text-blue-600 transition"></i>
+                    </div>
+                </a>
+                <a href="{{ url_for('admin.teachers') }}" class="block bg-green-50 hover:bg-green-100 p-3 rounded-lg transition group">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-chalkboard-teacher text-green-600 mr-3"></i>
+                            <span class="font-medium text-gray-700">View Teachers</span>
+                        </div>
+                        <i class="fas fa-arrow-right text-gray-400 group-hover:text-green-600 transition"></i>
+                    </div>
+                </a>
+                <a href="{{ url_for('admin.upload_teachers') }}" class="block bg-gray-50 hover:bg-gray-100 p-3 rounded-lg transition group">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-file-upload text-green-600 mr-3"></i>
+                            <span class="font-medium text-gray-700">Upload Teachers</span>
+                        </div>
+                        <i class="fas fa-arrow-right text-gray-400 group-hover:text-green-600 transition"></i>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Academic Setup Section -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4">
+                <h3 class="font-bold text-lg flex items-center">
+                    <i class="fas fa-graduation-cap mr-2"></i>
+                    Academic Setup
+                </h3>
+                <p class="text-xs text-purple-100 mt-1">Configure academic structure</p>
+            </div>
+            <div class="p-4 space-y-2">
+                <a href="{{ url_for('admin.sessions') }}" class="block bg-purple-50 hover:bg-purple-100 p-3 rounded-lg transition group">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-calendar-alt text-purple-600 mr-3"></i>
+                            <span class="font-medium text-gray-700">Sessions</span>
+                        </div>
+                        <i class="fas fa-arrow-right text-gray-400 group-hover:text-purple-600 transition"></i>
+                    </div>
+                </a>
+                <a href="{{ url_for('admin.terms') }}" class="block bg-gray-50 hover:bg-gray-100 p-3 rounded-lg transition group">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-bookmark text-purple-600 mr-3"></i>
+                            <span class="font-medium text-gray-700">Terms</span>
+                        </div>
+                        <i class="fas fa-arrow-right text-gray-400 group-hover:text-purple-600 transition"></i>
+                    </div>
+                </a>
+                <a href="{{ url_for('admin.classes') }}" class="block bg-purple-50 hover:bg-purple-100 p-3 rounded-lg transition group">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-door-open text-purple-600 mr-3"></i>
+                            <span class="font-medium text-gray-700">Classes</span>
+                        </div>
+                        <i class="fas fa-arrow-right text-gray-400 group-hover:text-purple-600 transition"></i>
+                    </div>
+                </a>
+                <a href="{{ url_for('admin.subjects') }}" class="block bg-gray-50 hover:bg-gray-100 p-3 rounded-lg transition group">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-book text-purple-600 mr-3"></i>
+                            <span class="font-medium text-gray-700">Subjects</span>
+                        </div>
+                        <i class="fas fa-arrow-right text-gray-400 group-hover:text-purple-600 transition"></i>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Reports & Results Section -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4">
+                <h3 class="font-bold text-lg flex items-center">
+                    <i class="fas fa-chart-bar mr-2"></i>
+                    Reports & Results
+                </h3>
+                <p class="text-xs text-orange-100 mt-1">View and publish results</p>
+            </div>
+            <div class="p-4 space-y-2">
+                <a href="{{ url_for('admin.results') }}" class="block bg-orange-50 hover:bg-orange-100 p-3 rounded-lg transition group">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-file-alt text-orange-600 mr-3"></i>
+                            <span class="font-medium text-gray-700">View Results</span>
+                        </div>
+                        <i class="fas fa-arrow-right text-gray-400 group-hover:text-orange-600 transition"></i>
+                    </div>
+                </a>
+                <a href="{{ url_for('admin.results') }}" class="block bg-gray-50 hover:bg-gray-100 p-3 rounded-lg transition group">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-orange-600 mr-3"></i>
+                            <span class="font-medium text-gray-700">Publish Results</span>
+                        </div>
+                        <i class="fas fa-arrow-right text-gray-400 group-hover:text-orange-600 transition"></i>
+                    </div>
+                </a>
+                <div class="block bg-gray-50 p-3 rounded-lg opacity-50 cursor-not-allowed">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-download text-gray-400 mr-3"></i>
+                            <span class="font-medium text-gray-500">Export Reports</span>
+                        </div>
+                        <span class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">Soon</span>
+                    </div>
+                </div>
+                <div class="block bg-gray-50 p-3 rounded-lg opacity-50 cursor-not-allowed">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-chart-line text-gray-400 mr-3"></i>
+                            <span class="font-medium text-gray-500">Analytics</span>
+                        </div>
+                        <span class="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded">Soon</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity & Overview -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+
+    <!-- Academic Sessions -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white p-4 flex items-center justify-between">
+            <div>
+                <h3 class="font-bold text-lg flex items-center">
+                    <i class="fas fa-calendar text-xl mr-2"></i>
+                    Academic Sessions
+                </h3>
+                <p class="text-xs text-indigo-100 mt-1">Current and recent sessions</p>
+            </div>
+            <a href="{{ url_for('admin.sessions') }}" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-lg text-xs font-medium transition">
+                View All
+            </a>
+        </div>
+        <div class="p-4">
+            {% if sessions %}
+            <div class="space-y-3">
+                {% for session in sessions %}
+                <div class="border-l-4 {% if session.is_current %}border-green-500 bg-green-50{% else %}border-gray-300 bg-gray-50{% endif %} p-3 rounded-r-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="font-semibold text-gray-800">{{ session.name }}</p>
+                            <p class="text-xs text-gray-600 mt-1">
+                                <i class="fas fa-calendar-day mr-1"></i>
+                                {{ session.start_date.strftime('%b %d, %Y') }} - {{ session.end_date.strftime('%b %d, %Y') }}
+                            </p>
+                        </div>
+                        {% if session.is_current %}
+                        <span class="bg-green-500 text-white text-xs px-3 py-1 rounded-full font-semibold">ACTIVE</span>
+                        {% else %}
+                        <span class="bg-gray-400 text-white text-xs px-3 py-1 rounded-full">Ended</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <i class="fas fa-calendar-plus text-gray-300 text-4xl mb-2"></i>
+                <p class="text-gray-500 text-sm">No sessions created yet</p>
+                <a href="{{ url_for('admin.sessions') }}" class="inline-block mt-3 bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                    <i class="fas fa-plus mr-1"></i>Create Session
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Classes -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-pink-500 to-pink-600 text-white p-4 flex items-center justify-between">
+            <div>
+                <h3 class="font-bold text-lg flex items-center">
+                    <i class="fas fa-door-open text-xl mr-2"></i>
+                    Classes Overview
+                </h3>
+                <p class="text-xs text-pink-100 mt-1">Recently created classes</p>
+            </div>
+            <a href="{{ url_for('admin.classes') }}" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-1 rounded-lg text-xs font-medium transition">
+                View All
+            </a>
+        </div>
+        <div class="p-4">
+            {% if classes %}
+            <div class="grid grid-cols-1 gap-3">
+                {% for class in classes %}
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-pink-300 transition cbt-card">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800">{{ class.name }}</h4>
+                            <p class="text-xs text-gray-600 mt-1">
+                                {% if class.level %}
+                                <i class="fas fa-layer-group mr-1"></i>{{ class.level }}
+                                {% else %}
+                                <i class="fas fa-layer-group mr-1"></i>Level not set
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <div class="bg-pink-100 text-pink-700 px-3 py-1 rounded-full text-xs font-bold">
+                                {{ class.students|length }}
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Students</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <i class="fas fa-plus-circle text-gray-300 text-4xl mb-2"></i>
+                <p class="text-gray-500 text-sm">No classes created yet</p>
+                <a href="{{ url_for('admin.classes') }}" class="inline-block mt-3 bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                    <i class="fas fa-plus mr-1"></i>Create Class
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Tips Section -->
+<div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+    <div class="flex items-start space-x-4">
+        <div class="bg-blue-500 p-3 rounded-xl shadow-md">
+            <i class="fas fa-lightbulb text-white text-2xl"></i>
+        </div>
+        <div class="flex-1">
+            <h3 class="font-bold text-gray-800 text-lg mb-2">Quick Tips for Administrators</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                        <span class="font-semibold text-gray-700">Setup Order</span>
+                    </div>
+                    <p class="text-gray-600 text-xs">Create Sessions → Terms → Classes → Subjects → Upload Users</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-file-excel text-blue-500 mr-2"></i>
+                        <span class="font-semibold text-gray-700">Bulk Upload</span>
+                    </div>
+                    <p class="text-gray-600 text-xs">Use Excel templates to quickly upload students and teachers in bulk</p>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-shield-alt text-purple-500 mr-2"></i>
+                        <span class="font-semibold text-gray-700">Security</span>
+                    </div>
+                    <p class="text-gray-600 text-xs">Regularly backup your database and update admin credentials</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
