@@ -27,19 +27,18 @@ def admin_required(f):
 @admin_required
 def dashboard():
     """Admin dashboard with system statistics"""
-    stats = {
-        'total_students': Student.query.count(),
-        'total_classes': SchoolClass.query.count(),
-        'total_subjects': Subject.query.count(),
-        'total_exams': Exam.query.count(),
-        'published_exams': Exam.query.filter_by(status='published').count(),
-        'total_attempts': Attempt.query.filter_by(status='submitted').count(),
-    }
+    total_students = Student.query.count()
+    total_classes = SchoolClass.query.count()
+    total_subjects = Subject.query.count()
 
-    recent_exams = Exam.query.order_by(Exam.created_at.desc()).limit(5).all()
-    recent_students = Student.query.order_by(Student.id.desc()).limit(5).all()
+    # Get recent classes for display
+    classes = SchoolClass.query.order_by(SchoolClass.id.desc()).limit(6).all()
 
-    return render_template('admin/dashboard.html', stats=stats, recent_exams=recent_exams, recent_students=recent_students)
+    return render_template('admin/dashboard.html',
+                         total_students=total_students,
+                         total_classes=total_classes,
+                         total_subjects=total_subjects,
+                         classes=classes)
 
 
 # ========== CLASS MANAGEMENT ==========
