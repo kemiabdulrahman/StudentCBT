@@ -277,7 +277,30 @@ def view_result(attempt_id):
         flash('This exam has not been submitted yet.', 'warning')
         return redirect(url_for('student.dashboard'))
 
+    # Check if results are published
+    if not attempt.exam.results_published:
+        flash('Results for this exam have not been published yet.', 'warning')
+        return redirect(url_for('student.dashboard'))
+
     # Get all answers with questions
     answers = Answer.query.filter_by(attempt_id=attempt.id).join(Question).order_by(Question.order).all()
 
-    return render_template('student/result.html', attempt=attempt, answers=answers)
+    return render_template('student/attempt_summary.html', attempt=attempt, answers=answers)
+
+
+@student_bp.route('/results')
+@login_required
+@student_required
+def results():
+    """View all published exam results"""
+    student = Student.query.filter_by(user_id=current_user.id).first()
+
+    # Get all submitted attempts for exams where results are published
+    attempts = Attempt.query.filter_by(
+        student_id=student.id,
+        status='submitted'
+    ).join(Exam).filter(
+        Exam.results_published == True
+    ).order_by(Attempt.submitted_at.desc()).all()
+
+    return render_template('student/results.html', attempts=attempts)

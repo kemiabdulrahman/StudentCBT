@@ -43,13 +43,25 @@ def dashboard():
 
 # ========== CLASS MANAGEMENT ==========
 
-@admin_bp.route('/classes')
+@admin_bp.route('/classes', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def classes():
-    """List all classes"""
+    """List all classes and handle inline creation"""
+    form = SchoolClassForm()
+
+    if form.validate_on_submit():
+        school_class = SchoolClass(
+            name=form.name.data,
+            level=form.level.data
+        )
+        db.session.add(school_class)
+        db.session.commit()
+        flash(f'Class "{school_class.name}" created successfully!', 'success')
+        return redirect(url_for('admin.classes'))
+
     all_classes = SchoolClass.query.order_by(SchoolClass.name).all()
-    return render_template('admin/classes.html', classes=all_classes)
+    return render_template('admin/classes.html', classes=all_classes, form=form)
 
 
 @admin_bp.route('/classes/create', methods=['GET', 'POST'])
@@ -109,13 +121,26 @@ def delete_class(class_id):
 
 # ========== SUBJECT MANAGEMENT ==========
 
-@admin_bp.route('/subjects')
+@admin_bp.route('/subjects', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def subjects():
-    """List all subjects"""
+    """List all subjects and handle inline creation"""
+    form = SubjectForm()
+
+    if form.validate_on_submit():
+        subject = Subject(
+            name=form.name.data,
+            code=form.code.data,
+            class_id=form.class_id.data
+        )
+        db.session.add(subject)
+        db.session.commit()
+        flash(f'Subject "{subject.name}" created successfully!', 'success')
+        return redirect(url_for('admin.subjects'))
+
     all_subjects = Subject.query.join(SchoolClass).order_by(SchoolClass.name, Subject.name).all()
-    return render_template('admin/subjects.html', subjects=all_subjects)
+    return render_template('admin/subjects.html', subjects=all_subjects, form=form)
 
 
 @admin_bp.route('/subjects/create', methods=['GET', 'POST'])
@@ -508,3 +533,22 @@ def view_attempt(attempt_id):
     answers = Answer.query.filter_by(attempt_id=attempt_id).join(Question).order_by(Question.order).all()
 
     return render_template('admin/view_attempt.html', attempt=attempt, answers=answers)
+
+
+@admin_bp.route('/exams/<int:exam_id>/toggle-results', methods=['POST'])
+@login_required
+@admin_required
+def toggle_exam_results(exam_id):
+    """Toggle results publication for an exam"""
+    exam = Exam.query.get_or_404(exam_id)
+
+    # Toggle the results_published status
+    exam.results_published = not exam.results_published
+    db.session.commit()
+
+    if exam.results_published:
+        flash(f'Results for "{exam.title}" are now visible to students!', 'success')
+    else:
+        flash(f'Results for "{exam.title}" are now hidden from students!', 'warning')
+
+    return redirect(url_for('admin.exam_attempts', exam_id=exam.id))

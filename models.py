@@ -100,6 +100,7 @@ class Exam(db.Model):
     pass_mark = db.Column(db.Integer, default=40)
 
     status = db.Column(db.String(20), default='draft')  # draft, published, closed
+    results_published = db.Column(db.Boolean, default=False)  # Controls if students can see their scores
 
     # Optional scheduling
     scheduled_start = db.Column(db.DateTime)
