@@ -119,6 +119,24 @@ def delete_class(class_id):
     return redirect(url_for('admin.classes'))
 
 
+@admin_bp.route('/classes/<int:class_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def class_detail(class_id):
+    """View and edit class details"""
+    school_class = SchoolClass.query.get_or_404(class_id)
+    form = SchoolClassForm(obj=school_class)
+
+    if form.validate_on_submit():
+        school_class.name = form.name.data
+        school_class.level = form.level.data
+        db.session.commit()
+        flash(f'Class "{school_class.name}" updated successfully!', 'success')
+        return redirect(url_for('admin.class_detail', class_id=class_id))
+
+    return render_template('admin/class_detail.html', school_class=school_class, form=form)
+
+
 # ========== SUBJECT MANAGEMENT ==========
 
 @admin_bp.route('/subjects', methods=['GET', 'POST'])
@@ -254,6 +272,34 @@ def delete_student(student_id):
 
     flash(f'Student "{student.full_name}" deleted successfully!', 'success')
     return redirect(url_for('admin.students'))
+
+
+@admin_bp.route('/students/<int:student_id>')
+@login_required
+@admin_required
+def student_detail(student_id):
+    """View student details"""
+    student = Student.query.get_or_404(student_id)
+    return render_template('admin/student_detail.html', student=student)
+
+
+@admin_bp.route('/students/<int:student_id>/toggle-status', methods=['POST'])
+@login_required
+@admin_required
+def toggle_student_status(student_id):
+    """Toggle student active status"""
+    student = Student.query.get_or_404(student_id)
+    user = student.user
+
+    user.is_active = not user.is_active
+    db.session.commit()
+
+    if user.is_active:
+        flash(f'Student "{student.full_name}" has been activated!', 'success')
+    else:
+        flash(f'Student "{student.full_name}" has been deactivated!', 'warning')
+
+    return redirect(url_for('admin.student_detail', student_id=student_id))
 
 
 # ========== EXAM MANAGEMENT ==========
