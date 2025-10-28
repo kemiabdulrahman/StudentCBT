@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}View Attempt - {{ attempt.student.full_name }}{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <a href="{{ url_for('admin.exam_attempts', exam_id=attempt.exam.id) }}" class="text-blue-600 hover:text-blue-800 mb-4 inline-block">
+        <i class="fas fa-arrow-left mr-2"></i>Back to Attempts
+    </a>
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">{{ attempt.exam.title }}</h1>
+            <p class="text-gray-600 mt-2">Student: {{ attempt.student.full_name }} ({{ attempt.student.student_id }})</p>
+        </div>
+        <div class="text-right">
+            <p class="text-sm text-gray-600">Score</p>
+            <p class="text-4xl font-bold {% if attempt.percentage >= attempt.exam.pass_mark %}text-green-600{% else %}text-red-600{% endif %}">
+                {{ "%.1f"|format(attempt.percentage) }}%
+            </p>
+            <p class="text-sm text-gray-600">{{ attempt.total_score }}/{{ attempt.exam.total_marks }} marks</p>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+        <p class="text-gray-600 text-sm">Grade</p>
+        <p class="text-3xl font-bold text-gray-800">{{ attempt.grade }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+        <p class="text-gray-600 text-sm">Status</p>
+        <p class="text-lg font-semibold {% if attempt.percentage >= attempt.exam.pass_mark %}text-green-600{% else %}text-red-600{% endif %}">
+            {% if attempt.percentage >= attempt.exam.pass_mark %}Passed{% else %}Failed{% endif %}
+        </p>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+        <p class="text-gray-600 text-sm">Started</p>
+        <p class="text-sm font-medium text-gray-800">{{ attempt.started_at.strftime('%b %d, %I:%M %p') }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+        <p class="text-gray-600 text-sm">Submitted</p>
+        <p class="text-sm font-medium text-gray-800">{{ attempt.submitted_at.strftime('%b %d, %I:%M %p') if attempt.submitted_at else 'N/A' }}</p>
+    </div>
+</div>
+
+<!-- Answers -->
+<div class="bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-xl font-bold text-gray-800 mb-6">
+        <i class="fas fa-list text-blue-600 mr-2"></i>Answers Review
+    </h2>
+
+    <div class="space-y-6">
+        {% for answer in answers %}
+        <div class="border-2 {% if answer.is_correct %}border-green-200 bg-green-50{% else %}border-red-200 bg-red-50{% endif %} rounded-lg p-6">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-3">
+                    <span class="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold">Q{{ loop.index }}</span>
+                    <span class="px-2 py-1 text-xs font-semibold rounded {% if answer.is_correct %}bg-green-500 text-white{% else %}bg-red-500 text-white{% endif %}">
+                        {% if answer.is_correct %}Correct{% else %}Incorrect{% endif %}
+                    </span>
+                </div>
+                <span class="text-sm font-semibold text-gray-700">{{ answer.question.marks }} marks</span>
+            </div>
+
+            <p class="text-gray-800 font-medium mb-4">{{ answer.question.question_text }}</p>
+
+            {% if answer.question.question_type == 'mcq' %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <div class="flex items-center p-3 rounded-lg {% if 'A' == answer.question.correct_answer %}bg-green-100 border-2 border-green-500{% elif 'A' == answer.answer_text %}bg-red-100 border-2 border-red-500{% else %}bg-white border border-gray-300{% endif %}">
+                    <span class="w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 {% if 'A' == answer.question.correct_answer %}bg-green-500 text-white{% elif 'A' == answer.answer_text %}bg-red-500 text-white{% else %}bg-gray-200{% endif %}">A</span>
+                    <span>{{ answer.question.option_a }}</span>
+                    {% if 'A' == answer.question.correct_answer %}<i class="fas fa-check ml-auto text-green-600"></i>{% endif %}
+                </div>
+                <div class="flex items-center p-3 rounded-lg {% if 'B' == answer.question.correct_answer %}bg-green-100 border-2 border-green-500{% elif 'B' == answer.answer_text %}bg-red-100 border-2 border-red-500{% else %}bg-white border border-gray-300{% endif %}">
+                    <span class="w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 {% if 'B' == answer.question.correct_answer %}bg-green-500 text-white{% elif 'B' == answer.answer_text %}bg-red-500 text-white{% else %}bg-gray-200{% endif %}">B</span>
+                    <span>{{ answer.question.option_b }}</span>
+                    {% if 'B' == answer.question.correct_answer %}<i class="fas fa-check ml-auto text-green-600"></i>{% endif %}
+                </div>
+                <div class="flex items-center p-3 rounded-lg {% if 'C' == answer.question.correct_answer %}bg-green-100 border-2 border-green-500{% elif 'C' == answer.answer_text %}bg-red-100 border-2 border-red-500{% else %}bg-white border border-gray-300{% endif %}">
+                    <span class="w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 {% if 'C' == answer.question.correct_answer %}bg-green-500 text-white{% elif 'C' == answer.answer_text %}bg-red-500 text-white{% else %}bg-gray-200{% endif %}">C</span>
+                    <span>{{ answer.question.option_c }}</span>
+                    {% if 'C' == answer.question.correct_answer %}<i class="fas fa-check ml-auto text-green-600"></i>{% endif %}
+                </div>
+                <div class="flex items-center p-3 rounded-lg {% if 'D' == answer.question.correct_answer %}bg-green-100 border-2 border-green-500{% elif 'D' == answer.answer_text %}bg-red-100 border-2 border-red-500{% else %}bg-white border border-gray-300{% endif %}">
+                    <span class="w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 {% if 'D' == answer.question.correct_answer %}bg-green-500 text-white{% elif 'D' == answer.answer_text %}bg-red-500 text-white{% else %}bg-gray-200{% endif %}">D</span>
+                    <span>{{ answer.question.option_d }}</span>
+                    {% if 'D' == answer.question.correct_answer %}<i class="fas fa-check ml-auto text-green-600"></i>{% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="flex gap-4 mb-4">
+                <div class="flex-1 p-3 rounded-lg {% if answer.question.correct_answer == 'True' %}bg-green-100 border-2 border-green-500{% elif answer.answer_text == 'True' %}bg-red-100 border-2 border-red-500{% else %}bg-white border border-gray-300{% endif %}">
+                    <span class="font-semibold">True</span>
+                    {% if answer.question.correct_answer == 'True' %}<i class="fas fa-check ml-2 text-green-600"></i>{% endif %}
+                </div>
+                <div class="flex-1 p-3 rounded-lg {% if answer.question.correct_answer == 'False' %}bg-green-100 border-2 border-green-500{% elif answer.answer_text == 'False' %}bg-red-100 border-2 border-red-500{% else %}bg-white border border-gray-300{% endif %}">
+                    <span class="font-semibold">False</span>
+                    {% if answer.question.correct_answer == 'False' %}<i class="fas fa-check ml-2 text-green-600"></i>{% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="flex items-center gap-4 text-sm pt-3 border-t border-gray-300">
+                <div>
+                    <span class="text-gray-600">Student's Answer:</span>
+                    <span class="font-semibold {% if answer.is_correct %}text-green-700{% else %}text-red-700{% endif %}">{{ answer.answer_text or 'Not answered' }}</span>
+                </div>
+                {% if not answer.is_correct %}
+                <div>
+                    <span class="text-gray-600">Correct Answer:</span>
+                    <span class="font-semibold text-green-700">{{ answer.question.correct_answer }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

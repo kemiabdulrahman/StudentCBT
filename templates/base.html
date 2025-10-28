@@ -63,6 +63,7 @@
             <a href="{{ url_for('admin.classes') }}" class="block px-4 py-2 hover:bg-gray-100"><i class="fas fa-door-open mr-2 text-purple-500"></i>Classes</a>
             <a href="{{ url_for('admin.subjects') }}" class="block px-4 py-2 hover:bg-gray-100"><i class="fas fa-book mr-2 text-yellow-500"></i>Subjects</a>
             <a href="{{ url_for('admin.students') }}" class="block px-4 py-2 hover:bg-gray-100"><i class="fas fa-user-graduate mr-2 text-blue-500"></i>Students</a>
+            <a href="{{ url_for('admin.exams') }}" class="block px-4 py-2 hover:bg-gray-100"><i class="fas fa-clipboard-list mr-2 text-green-500"></i>Exams</a>
           </div>
         </div>
 
@@ -98,6 +99,7 @@
       <a href="{{ url_for('admin.classes') }}" class="block hover:text-white">Classes</a>
       <a href="{{ url_for('admin.subjects') }}" class="block hover:text-white">Subjects</a>
       <a href="{{ url_for('admin.students') }}" class="block hover:text-white">Students</a>
+      <a href="{{ url_for('admin.exams') }}" class="block hover:text-white">Exams</a>
     {% elif current_user.role == 'student' %}
       <a href="{{ url_for('student.dashboard') }}" class="block hover:text-white">Dashboard</a>
       <a href="{{ url_for('student.exams') }}" class="block hover:text-white">Exams</a>
