@@ -462,34 +462,51 @@ def add_question(exam_id):
 @login_required
 @admin_required
 def upload_questions(exam_id):
-    """Bulk upload questions from Word/PDF"""
+    """Bulk upload questions from Word or PDF files."""
     exam = Exam.query.get_or_404(exam_id)
     form = QuestionUploadForm()
 
     if form.validate_on_submit():
         file = form.file.data
         filename = secure_filename(file.filename)
-        filepath = os.path.join('instance', filename)
-        file.save(filepath)
 
-        # Parse based on file type
-        if filename.endswith('.docx'):
-            result = parse_questions_from_word(filepath)
-        elif filename.endswith('.pdf'):
-            result = parse_questions_from_pdf(filepath)
-        else:
-            flash('Invalid file type!', 'danger')
-            os.remove(filepath)
-            return redirect(url_for('admin.upload_questions', exam_id=exam_id))
+        # Use a temporary directory under instance
+        upload_dir = os.path.join(current_app.instance_path, 'temp_uploads')
+        os.makedirs(upload_dir, exist_ok=True)
+        filepath = os.path.join(upload_dir, filename)
 
-        # Clean up file
-        os.remove(filepath)
+        try:
+            file.save(filepath)
 
-        if result['success']:
-            # Get the highest order number
+            # Detect file type and parse accordingly
+            if filename.endswith('.docx'):
+                result = parse_questions_from_word(filepath)
+            elif filename.endswith('.pdf'):
+                result = parse_questions_from_pdf(filepath)
+            else:
+                flash('Invalid file type! Only .docx or .pdf are supported.', 'danger')
+                return redirect(url_for('admin.upload_questions', exam_id=exam_id))
+
+            # Ensure parsing succeeded
+            if not result.get('success'):
+                flash(f"Error while parsing file: {result.get('message', 'Unknown error')}", 'danger')
+                return redirect(url_for('admin.upload_questions', exam_id=exam_id))
+
+            questions = result.get('questions', [])
+            if not questions:
+                flash("No valid questions found. Please check your file format.", 'warning')
+                return redirect(url_for('admin.upload_questions', exam_id=exam_id))
+
+            # Validate question structure before saving
+            is_valid, msg = validate_parsed_questions(questions)
+            if not is_valid:
+                flash(f"Invalid file format: {msg}", "danger")
+                return redirect(url_for('admin.upload_questions', exam_id=exam_id))
+
+            # Insert questions into DB
             max_order = db.session.query(db.func.max(Question.order)).filter_by(exam_id=exam_id).scalar() or 0
 
-            for idx, q_data in enumerate(result['questions']):
+            for idx, q_data in enumerate(questions):
                 question = Question(
                     exam_id=exam_id,
                     question_text=q_data['question_text'],
@@ -508,10 +525,18 @@ def upload_questions(exam_id):
                 db.session.add(question)
 
             db.session.commit()
-            flash(f'Successfully uploaded {len(result["questions"])} questions!', 'success')
+            flash(f"Successfully uploaded {len(questions)} question(s) to '{exam.title}'.", 'success')
             return redirect(url_for('admin.exam_details', exam_id=exam_id))
-        else:
-            flash(f'Error: {result["message"]}', 'danger')
+
+        except Exception as e:
+            current_app.logger.error(f"Error in upload_questions: {e}")
+            flash(f"An unexpected error occurred: {str(e)}", "danger")
+            return redirect(url_for('admin.upload_questions', exam_id=exam_id))
+
+        finally:
+            # Always clean up temp file
+            if os.path.exists(filepath):
+                os.remove(filepath)
 
     return render_template('admin/upload_questions.html', form=form, exam=exam)
 

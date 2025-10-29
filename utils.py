@@ -231,3 +231,14 @@ def auto_grade_answer(question, answer_text):
         return is_correct, marks
 
     return False, 0
+
+def validate_parsed_questions(questions):
+    for idx, q in enumerate(questions, start=1):
+        if not q.get('question_text'):
+            return (False, f"Question {idx} has no text.")
+        if q['question_type'] == 'mcq':
+            if not all([q.get('option_a'), q.get('option_b')]):
+                return (False, f"Question {idx} is missing MCQ options.")
+        if not q.get('correct_answer'):
+            return (False, f"Question {idx} has no answer.")
+    return (True, None)

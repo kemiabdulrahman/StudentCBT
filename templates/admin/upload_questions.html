@@ -23,24 +23,39 @@
                 <p class="text-red-500 text-sm mt-1">{{ form.file.errors[0] }}</p>
             {% endif %}
         </div>
-
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <h3 class="font-semibold text-blue-900 mb-2">
                 <i class="fas fa-info-circle mr-2"></i>Format Instructions
             </h3>
-            <p class="text-sm text-blue-800 mb-2">Your document should follow this format for each question:</p>
-            <div class="bg-white rounded p-3 text-sm font-mono text-gray-700">
-                <p class="mb-1">Question: What is 2 + 2?</p>
-                <p class="mb-1">Type: mcq</p>
-                <p class="mb-1">Marks: 2</p>
-                <p class="mb-1">A) 3</p>
-                <p class="mb-1">B) 4</p>
-                <p class="mb-1">C) 5</p>
-                <p class="mb-1">D) 6</p>
-                <p>Answer: B</p>
-            </div>
-        </div>
+            <p class="text-sm text-blue-800 mb-2">
+                Your Word or PDF file should follow <strong>this exact structure</strong> for each question. 
+                Supported types: <span class="font-semibold">MCQ</span> and <span class="font-semibold">True/False</span>.
+            </p>
 
+            <div class="bg-white rounded p-3 text-sm font-mono text-gray-700 leading-relaxed">
+                <p>Q1. What is 2 + 2? [MCQ]</p>
+                <p>A) 3</p>
+                <p>B) 4</p>
+                <p>C) 5</p>
+                <p>D) 6</p>
+                <p>Answer: B</p>
+                <p>Marks: 2</p>
+                <br>
+                <p>Q2. The sky is blue. [TRUE_FALSE]</p>
+                <p>Answer: True</p>
+                <p>Marks: 1</p>
+            </div>
+
+            <p class="text-xs text-blue-700 mt-3">
+                📘 Notes:
+                <ul class="list-disc list-inside text-xs text-blue-700">
+                    <li>Each question must start with <code>Q1.</code>, <code>Q2.</code>, etc.</li>
+                    <li>Use <code>[MCQ]</code> or <code>[TRUE_FALSE]</code> to indicate question type.</li>
+                    <li>For MCQs, use <code>A)</code>, <code>B)</code>, <code>C)</code>, <code>D)</code>.</li>
+                    <li>Ensure “Answer:” and “Marks:” appear exactly as shown.</li>
+                </ul>
+            </p>
+        </div>
         <div class="flex gap-3">
             <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition">
                 <i class="fas fa-upload mr-2"></i>Upload Questions
