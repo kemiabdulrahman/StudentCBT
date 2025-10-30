@@ -22,7 +22,6 @@ class SchoolClassForm(FlaskForm):
 class SubjectForm(FlaskForm):
     """Form for creating/editing subjects"""
     name = StringField('Subject Name', validators=[DataRequired(), Length(max=100)])
-    code = StringField('Subject Code', validators=[Length(max=20)])
     class_id = SelectField('Class', coerce=int, validators=[DataRequired()])
     submit = SubmitField('Save Subject')
 
@@ -45,31 +44,33 @@ class StudentUploadForm(FlaskForm):
         self.class_id.choices = [(c.id, c.name) for c in SchoolClass.query.order_by(SchoolClass.name).all()]
 
 
-class ExamForm(FlaskForm):
-    """Form for creating/editing exams"""
-    title = StringField('Exam Title', validators=[DataRequired(), Length(max=200)])
+class AssessmentForm(FlaskForm):
+    """Form for creating/editing assessments"""
+    title = StringField('Assessment Title', validators=[DataRequired(), Length(max=200)])
     description = TextAreaField('Description')
     subject_id = SelectField('Subject', coerce=int, validators=[DataRequired()])
     class_id = SelectField('Class', coerce=int, validators=[DataRequired()])
     duration_minutes = IntegerField('Duration (Minutes)', validators=[DataRequired(), NumberRange(min=1)])
     pass_mark = IntegerField('Pass Mark (%)', validators=[DataRequired(), NumberRange(min=0, max=100)])
+    show_results = BooleanField('Allow students to view results after submission')
     scheduled_start = DateTimeField('Scheduled Start (Optional)', format='%Y-%m-%dT%H:%M', validators=[Optional()])
     scheduled_end = DateTimeField('Scheduled End (Optional)', format='%Y-%m-%dT%H:%M', validators=[Optional()])
-    submit = SubmitField('Save Exam')
+    submit = SubmitField('Save Assessment')
 
     def __init__(self, *args, **kwargs):
-        super(ExamForm, self).__init__(*args, **kwargs)
+        super(AssessmentForm, self).__init__(*args, **kwargs)
         self.subject_id.choices = [(s.id, f"{s.name} - {s.school_class.name}")
                                    for s in Subject.query.join(SchoolClass).order_by(Subject.name).all()]
         self.class_id.choices = [(c.id, c.name) for c in SchoolClass.query.order_by(SchoolClass.name).all()]
 
 
 class QuestionForm(FlaskForm):
-    """Form for creating/editing questions - only MCQ and True/False"""
+    """Form for creating/editing questions - MCQ, True/False, and Fill-in-the-Blank"""
     question_text = TextAreaField('Question Text', validators=[DataRequired()])
     question_type = SelectField('Question Type', choices=[
         ('mcq', 'Multiple Choice'),
-        ('true_false', 'True/False')
+        ('true_false', 'True/False'),
+        ('fill_blank', 'Fill in the Blank')
     ], validators=[DataRequired()])
     marks = IntegerField('Marks', validators=[DataRequired(), NumberRange(min=1)])
 
@@ -79,7 +80,7 @@ class QuestionForm(FlaskForm):
     option_c = StringField('Option C')
     option_d = StringField('Option D')
 
-    # Correct answer: 'A', 'B', 'C', 'D' for MCQ or 'True', 'False' for True/False
+    # Correct answer: 'A', 'B', 'C', 'D' for MCQ, 'True'/'False' for True/False, or text for Fill-blank
     correct_answer = StringField('Correct Answer', validators=[DataRequired()])
 
     submit = SubmitField('Add Question')

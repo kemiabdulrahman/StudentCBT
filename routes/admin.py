@@ -1,12 +1,14 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file
 from flask_login import login_required, current_user
 from functools import wraps
-from models import db, User, Student, SchoolClass, Subject, Exam, Question, Attempt, Answer
-from forms import SchoolClassForm, SubjectForm, StudentUploadForm, ExamForm, QuestionForm, QuestionUploadForm, EmptyForm
-from utils import parse_excel_students, parse_questions_from_word, parse_questions_from_pdf
+from models import db, User, Student, SchoolClass, Subject, Assessment, Question, Attempt, Answer
+from forms import SchoolClassForm, SubjectForm, StudentUploadForm, AssessmentForm, QuestionForm, QuestionUploadForm, EmptyForm
+from utils import (parse_excel_students, parse_questions_from_word, parse_questions_from_pdf,
+                  export_assessment_to_pdf, export_assessment_to_excel, export_student_answer_sheet)
 import os
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from io import BytesIO
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -231,141 +233,143 @@ def delete_student(student_id):
     return redirect(url_for('admin.students'))
 
 
-# ========== EXAM MANAGEMENT ==========
+# ========== ASSESSMENT MANAGEMENT ==========
 
-@admin_bp.route('/exams')
+@admin_bp.route('/assessments')
 @login_required
 @admin_required
-def exams():
-    """List all exams"""
-    all_exams = Exam.query.order_by(Exam.created_at.desc()).all()
-    return render_template('admin/exams.html', exams=all_exams)
+def assessments():
+    """List all assessments"""
+    all_assessments = Assessment.query.order_by(Assessment.created_at.desc()).all()
+    return render_template('admin/assessments.html', assessments=all_assessments)
 
 
-@admin_bp.route('/exams/create', methods=['GET', 'POST'])
+@admin_bp.route('/assessments/create', methods=['GET', 'POST'])
 @login_required
 @admin_required
-def create_exam():
-    """Create a new exam"""
-    form = ExamForm()
+def create_assessment():
+    """Create a new assessment"""
+    form = AssessmentForm()
     if form.validate_on_submit():
-        exam = Exam(
+        assessment = Assessment(
             title=form.title.data,
             description=form.description.data,
             subject_id=form.subject_id.data,
             class_id=form.class_id.data,
             duration_minutes=form.duration_minutes.data,
             pass_mark=form.pass_mark.data,
+            show_results=form.show_results.data,
             scheduled_start=form.scheduled_start.data,
             scheduled_end=form.scheduled_end.data,
             status='draft'
         )
-        db.session.add(exam)
+        db.session.add(assessment)
         db.session.commit()
-        flash(f'Exam "{exam.title}" created successfully! Now add questions.', 'success')
-        return redirect(url_for('admin.exam_details', exam_id=exam.id))
+        flash(f'Assessment "{assessment.title}" created successfully! Now add questions.', 'success')
+        return redirect(url_for('admin.assessment_details', assessment_id=assessment.id))
 
-    return render_template('admin/create_exam.html', form=form)
+    return render_template('admin/create_assessment.html', form=form)
 
 
-@admin_bp.route('/exams/<int:exam_id>')
+@admin_bp.route('/assessments/<int:assessment_id>')
 @login_required
 @admin_required
-def exam_details(exam_id):
-    """View exam details and questions"""
-    exam = Exam.query.get_or_404(exam_id)
-    questions = Question.query.filter_by(exam_id=exam_id).order_by(Question.order).all()
+def assessment_details(assessment_id):
+    """View assessment details and questions"""
+    assessment = Assessment.query.get_or_404(assessment_id)
+    questions = Question.query.filter_by(assessment_id=assessment_id).order_by(Question.order).all()
 
     # Calculate total marks
     total_marks = sum(q.marks for q in questions)
-    exam.total_marks = total_marks
+    assessment.total_marks = total_marks
     db.session.commit()
 
-    return render_template('admin/exam_details.html', exam=exam, questions=questions)
+    return render_template('admin/assessment_details.html', assessment=assessment, questions=questions)
 
 
-@admin_bp.route('/exams/<int:exam_id>/edit', methods=['GET', 'POST'])
+@admin_bp.route('/assessments/<int:assessment_id>/edit', methods=['GET', 'POST'])
 @login_required
 @admin_required
-def edit_exam(exam_id):
-    """Edit an exam"""
-    exam = Exam.query.get_or_404(exam_id)
-    form = ExamForm(obj=exam)
+def edit_assessment(assessment_id):
+    """Edit an assessment"""
+    assessment = Assessment.query.get_or_404(assessment_id)
+    form = AssessmentForm(obj=assessment)
 
     if form.validate_on_submit():
-        exam.title = form.title.data
-        exam.description = form.description.data
-        exam.subject_id = form.subject_id.data
-        exam.class_id = form.class_id.data
-        exam.duration_minutes = form.duration_minutes.data
-        exam.pass_mark = form.pass_mark.data
-        exam.scheduled_start = form.scheduled_start.data
-        exam.scheduled_end = form.scheduled_end.data
+        assessment.title = form.title.data
+        assessment.description = form.description.data
+        assessment.subject_id = form.subject_id.data
+        assessment.class_id = form.class_id.data
+        assessment.duration_minutes = form.duration_minutes.data
+        assessment.pass_mark = form.pass_mark.data
+        assessment.show_results = form.show_results.data
+        assessment.scheduled_start = form.scheduled_start.data
+        assessment.scheduled_end = form.scheduled_end.data
         db.session.commit()
-        flash(f'Exam "{exam.title}" updated successfully!', 'success')
-        return redirect(url_for('admin.exam_details', exam_id=exam.id))
+        flash(f'Assessment "{assessment.title}" updated successfully!', 'success')
+        return redirect(url_for('admin.assessment_details', assessment_id=assessment.id))
 
-    return render_template('admin/edit_exam.html', form=form, exam=exam)
+    return render_template('admin/edit_assessment.html', form=form, assessment=assessment)
 
 
-@admin_bp.route('/exams/<int:exam_id>/delete', methods=['POST'])
+@admin_bp.route('/assessments/<int:assessment_id>/delete', methods=['POST'])
 @login_required
 @admin_required
-def delete_exam(exam_id):
-    """Delete an exam"""
-    exam = Exam.query.get_or_404(exam_id)
+def delete_assessment(assessment_id):
+    """Delete an assessment"""
+    assessment = Assessment.query.get_or_404(assessment_id)
 
-    db.session.delete(exam)
+    db.session.delete(assessment)
     db.session.commit()
-    flash(f'Exam "{exam.title}" deleted successfully!', 'success')
-    return redirect(url_for('admin.exams'))
+    flash(f'Assessment "{assessment.title}" deleted successfully!', 'success')
+    return redirect(url_for('admin.assessments'))
 
 
-@admin_bp.route('/exams/<int:exam_id>/publish', methods=['POST'])
+@admin_bp.route('/assessments/<int:assessment_id>/publish', methods=['POST'])
 @login_required
 @admin_required
-def publish_exam(exam_id):
-    """Publish an exam"""
-    exam = Exam.query.get_or_404(exam_id)
+def publish_assessment(assessment_id):
+    """Publish an assessment"""
+    assessment = Assessment.query.get_or_404(assessment_id)
 
-    if not exam.questions:
-        flash('Cannot publish exam without questions!', 'danger')
-        return redirect(url_for('admin.exam_details', exam_id=exam.id))
+    if not assessment.questions:
+        flash('Cannot publish assessment without questions!', 'danger')
+        return redirect(url_for('admin.assessment_details', assessment_id=assessment.id))
 
-    exam.status = 'published'
+    assessment.status = 'published'
     db.session.commit()
-    flash(f'Exam "{exam.title}" published successfully!', 'success')
-    return redirect(url_for('admin.exam_details', exam_id=exam.id))
+    flash(f'Assessment "{assessment.title}" published successfully!', 'success')
+    return redirect(url_for('admin.assessment_details', assessment_id=assessment.id))
 
 
-@admin_bp.route('/exams/<int:exam_id>/close', methods=['POST'])
+@admin_bp.route('/assessments/<int:assessment_id>/close', methods=['POST'])
 @login_required
 @admin_required
-def close_exam(exam_id):
-    """Close an exam"""
-    exam = Exam.query.get_or_404(exam_id)
-    exam.status = 'closed'
+def close_assessment(assessment_id):
+    """Close an assessment"""
+    assessment = Assessment.query.get_or_404(assessment_id)
+    assessment.status = 'closed'
     db.session.commit()
-    flash(f'Exam "{exam.title}" closed successfully!', 'success')
-    return redirect(url_for('admin.exam_details', exam_id=exam.id))
+    flash(f'Assessment "{assessment.title}" closed successfully!', 'success')
+    return redirect(url_for('admin.assessment_details', assessment_id=assessment.id))
 
 
 # ========== QUESTION MANAGEMENT ==========
 
-@admin_bp.route('/exams/<int:exam_id>/questions/add', methods=['GET', 'POST'])
+@admin_bp.route('/assessments/<int:assessment_id>/questions/add', methods=['GET', 'POST'])
 @login_required
 @admin_required
-def add_question(exam_id):
-    """Add a question to an exam"""
-    exam = Exam.query.get_or_404(exam_id)
+def add_question(assessment_id):
+    """Add a question to an assessment"""
+    assessment = Assessment.query.get_or_404(assessment_id)
     form = QuestionForm()
 
     if form.validate_on_submit():
         # Get the highest order number
-        max_order = db.session.query(db.func.max(Question.order)).filter_by(exam_id=exam_id).scalar() or 0
+        max_order = db.session.query(db.func.max(Question.order)).filter_by(assessment_id=assessment_id).scalar() or 0
 
         question = Question(
-            exam_id=exam_id,
+            assessment_id=assessment_id,
             question_text=form.question_text.data,
             question_type=form.question_type.data,
             marks=form.marks.data,
@@ -382,17 +386,17 @@ def add_question(exam_id):
         db.session.add(question)
         db.session.commit()
         flash('Question added successfully!', 'success')
-        return redirect(url_for('admin.exam_details', exam_id=exam_id))
+        return redirect(url_for('admin.assessment_details', assessment_id=assessment_id))
 
-    return render_template('admin/add_question.html', form=form, exam=exam)
+    return render_template('admin/add_question.html', form=form, assessment=assessment)
 
 
-@admin_bp.route('/exams/<int:exam_id>/questions/upload', methods=['GET', 'POST'])
+@admin_bp.route('/assessments/<int:assessment_id>/questions/upload', methods=['GET', 'POST'])
 @login_required
 @admin_required
-def upload_questions(exam_id):
+def upload_questions(assessment_id):
     """Bulk upload questions from Word/PDF"""
-    exam = Exam.query.get_or_404(exam_id)
+    assessment = Assessment.query.get_or_404(assessment_id)
     form = QuestionUploadForm()
 
     if form.validate_on_submit():
@@ -409,18 +413,18 @@ def upload_questions(exam_id):
         else:
             flash('Invalid file type!', 'danger')
             os.remove(filepath)
-            return redirect(url_for('admin.upload_questions', exam_id=exam_id))
+            return redirect(url_for('admin.upload_questions', assessment_id=assessment_id))
 
         # Clean up file
         os.remove(filepath)
 
         if result['success']:
             # Get the highest order number
-            max_order = db.session.query(db.func.max(Question.order)).filter_by(exam_id=exam_id).scalar() or 0
+            max_order = db.session.query(db.func.max(Question.order)).filter_by(assessment_id=assessment_id).scalar() or 0
 
             for idx, q_data in enumerate(result['questions']):
                 question = Question(
-                    exam_id=exam_id,
+                    assessment_id=assessment_id,
                     question_text=q_data['question_text'],
                     question_type=q_data['question_type'],
                     marks=q_data.get('marks', 1),
@@ -438,11 +442,11 @@ def upload_questions(exam_id):
 
             db.session.commit()
             flash(f'Successfully uploaded {len(result["questions"])} questions!', 'success')
-            return redirect(url_for('admin.exam_details', exam_id=exam_id))
+            return redirect(url_for('admin.assessment_details', assessment_id=assessment_id))
         else:
             flash(f'Error: {result["message"]}', 'danger')
 
-    return render_template('admin/upload_questions.html', form=form, exam=exam)
+    return render_template('admin/upload_questions.html', form=form, assessment=assessment)
 
 
 @admin_bp.route('/questions/<int:question_id>/edit', methods=['GET', 'POST'])
@@ -467,7 +471,7 @@ def edit_question(question_id):
 
         db.session.commit()
         flash('Question updated successfully!', 'success')
-        return redirect(url_for('admin.exam_details', exam_id=question.exam_id))
+        return redirect(url_for('admin.assessment_details', assessment_id=question.assessment_id))
 
     return render_template('admin/edit_question.html', form=form, question=question)
 
@@ -478,25 +482,25 @@ def edit_question(question_id):
 def delete_question(question_id):
     """Delete a question"""
     question = Question.query.get_or_404(question_id)
-    exam_id = question.exam_id
+    assessment_id = question.assessment_id
 
     db.session.delete(question)
     db.session.commit()
     flash('Question deleted successfully!', 'success')
-    return redirect(url_for('admin.exam_details', exam_id=exam_id))
+    return redirect(url_for('admin.assessment_details', assessment_id=assessment_id))
 
 
 # ========== ATTEMPTS AND RESULTS ==========
 
-@admin_bp.route('/exams/<int:exam_id>/attempts')
+@admin_bp.route('/assessments/<int:assessment_id>/attempts')
 @login_required
 @admin_required
-def exam_attempts(exam_id):
-    """View all attempts for an exam"""
-    exam = Exam.query.get_or_404(exam_id)
-    attempts = Attempt.query.filter_by(exam_id=exam_id).order_by(Attempt.submitted_at.desc()).all()
+def assessment_attempts(assessment_id):
+    """View all attempts for an assessment"""
+    assessment = Assessment.query.get_or_404(assessment_id)
+    attempts = Attempt.query.filter_by(assessment_id=assessment_id).order_by(Attempt.submitted_at.desc()).all()
 
-    return render_template('admin/exam_attempts.html', exam=exam, attempts=attempts)
+    return render_template('admin/assessment_attempts.html', assessment=assessment, attempts=attempts)
 
 
 @admin_bp.route('/attempts/<int:attempt_id>')
@@ -508,3 +512,82 @@ def view_attempt(attempt_id):
     answers = Answer.query.filter_by(attempt_id=attempt_id).join(Question).order_by(Question.order).all()
 
     return render_template('admin/view_attempt.html', attempt=attempt, answers=answers)
+
+
+# ========== EXPORT FUNCTIONALITY ==========
+
+@admin_bp.route('/assessments/<int:assessment_id>/export/pdf')
+@login_required
+@admin_required
+def export_assessment_pdf(assessment_id):
+    """Export assessment results to PDF"""
+    assessment = Assessment.query.get_or_404(assessment_id)
+    attempts = Attempt.query.filter_by(assessment_id=assessment_id, status='submitted').order_by(Attempt.percentage.desc()).all()
+
+    if not attempts:
+        flash('No submitted attempts to export!', 'warning')
+        return redirect(url_for('admin.assessment_attempts', assessment_id=assessment_id))
+
+    pdf_bytes = export_assessment_to_pdf(assessment, attempts)
+
+    if pdf_bytes:
+        return send_file(
+            BytesIO(pdf_bytes),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f'{assessment.title}_Results.pdf'
+        )
+    else:
+        flash('Error generating PDF export!', 'danger')
+        return redirect(url_for('admin.assessment_attempts', assessment_id=assessment_id))
+
+
+@admin_bp.route('/assessments/<int:assessment_id>/export/excel')
+@login_required
+@admin_required
+def export_assessment_excel(assessment_id):
+    """Export assessment results to Excel"""
+    assessment = Assessment.query.get_or_404(assessment_id)
+    attempts = Attempt.query.filter_by(assessment_id=assessment_id, status='submitted').order_by(Attempt.percentage.desc()).all()
+
+    if not attempts:
+        flash('No submitted attempts to export!', 'warning')
+        return redirect(url_for('admin.assessment_attempts', assessment_id=assessment_id))
+
+    excel_bytes = export_assessment_to_excel(assessment, attempts)
+
+    if excel_bytes:
+        return send_file(
+            BytesIO(excel_bytes),
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=f'{assessment.title}_Results.xlsx'
+        )
+    else:
+        flash('Error generating Excel export!', 'danger')
+        return redirect(url_for('admin.assessment_attempts', assessment_id=assessment_id))
+
+
+@admin_bp.route('/attempts/<int:attempt_id>/export/answer-sheet')
+@login_required
+@admin_required
+def export_answer_sheet(attempt_id):
+    """Export student answer sheet to PDF"""
+    attempt = Attempt.query.get_or_404(attempt_id)
+
+    if attempt.status != 'submitted':
+        flash('Cannot export answer sheet for incomplete attempt!', 'warning')
+        return redirect(url_for('admin.view_attempt', attempt_id=attempt_id))
+
+    pdf_bytes = export_student_answer_sheet(attempt)
+
+    if pdf_bytes:
+        return send_file(
+            BytesIO(pdf_bytes),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f'{attempt.student.student_id}_{attempt.assessment.title}_Answer_Sheet.pdf'
+        )
+    else:
+        flash('Error generating answer sheet!', 'danger')
+        return redirect(url_for('admin.view_attempt', attempt_id=attempt_id))

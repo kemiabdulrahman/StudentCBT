@@ -62,7 +62,7 @@ class SchoolClass(db.Model):
     # Relationships
     students = db.relationship('Student', backref='school_class', lazy=True)
     subjects = db.relationship('Subject', backref='school_class', lazy=True)
-    exams = db.relationship('Exam', backref='school_class', lazy=True)
+    assessments = db.relationship('Assessment', backref='school_class', lazy=True)
 
     def __repr__(self):
         return f'<SchoolClass {self.name}>'
@@ -74,20 +74,19 @@ class Subject(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    code = db.Column(db.String(20), unique=True)
     class_id = db.Column(db.Integer, db.ForeignKey('classes.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships
-    exams = db.relationship('Exam', backref='subject', lazy=True, cascade='all, delete-orphan')
+    assessments = db.relationship('Assessment', backref='subject', lazy=True, cascade='all, delete-orphan')
 
     def __repr__(self):
         return f'<Subject {self.name} - {self.school_class.name}>'
 
 
-class Exam(db.Model):
-    """Exam model - simplified for MVP"""
-    __tablename__ = 'exams'
+class Assessment(db.Model):
+    """Assessment model - generic assessment/exam/test"""
+    __tablename__ = 'assessments'
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -95,11 +94,12 @@ class Exam(db.Model):
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False)
     class_id = db.Column(db.Integer, db.ForeignKey('classes.id'), nullable=False)
 
-    duration_minutes = db.Column(db.Integer, nullable=False)  # Exam duration
+    duration_minutes = db.Column(db.Integer, nullable=False)  # Assessment duration
     total_marks = db.Column(db.Integer, default=0)
     pass_mark = db.Column(db.Integer, default=40)
 
     status = db.Column(db.String(20), default='draft')  # draft, published, closed
+    show_results = db.Column(db.Boolean, default=False)  # Control if students can view results
 
     # Optional scheduling
     scheduled_start = db.Column(db.DateTime)
@@ -109,21 +109,21 @@ class Exam(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    questions = db.relationship('Question', backref='exam', lazy=True, cascade='all, delete-orphan', order_by='Question.order')
-    attempts = db.relationship('Attempt', backref='exam', lazy=True, cascade='all, delete-orphan')
+    questions = db.relationship('Question', backref='assessment', lazy=True, cascade='all, delete-orphan', order_by='Question.order')
+    attempts = db.relationship('Attempt', backref='assessment', lazy=True, cascade='all, delete-orphan')
 
     def __repr__(self):
-        return f'<Exam {self.title}>'
+        return f'<Assessment {self.title}>'
 
 
 class Question(db.Model):
-    """Question model - only MCQ and True/False types"""
+    """Question model - supports MCQ, True/False, and Fill-in-the-Blank types"""
     __tablename__ = 'questions'
 
     id = db.Column(db.Integer, primary_key=True)
-    exam_id = db.Column(db.Integer, db.ForeignKey('exams.id'), nullable=False)
+    assessment_id = db.Column(db.Integer, db.ForeignKey('assessments.id'), nullable=False)
     question_text = db.Column(db.Text, nullable=False)
-    question_type = db.Column(db.String(20), nullable=False)  # mcq or true_false
+    question_type = db.Column(db.String(20), nullable=False)  # mcq, true_false, or fill_blank
     marks = db.Column(db.Integer, default=1)
     order = db.Column(db.Integer, default=0)
 
@@ -133,8 +133,8 @@ class Question(db.Model):
     option_c = db.Column(db.Text)
     option_d = db.Column(db.Text)
 
-    # Correct answer: For MCQ: 'A', 'B', 'C', 'D'; For True/False: 'True' or 'False'
-    correct_answer = db.Column(db.String(10), nullable=False)
+    # Correct answer: For MCQ: 'A', 'B', 'C', 'D'; For True/False: 'True' or 'False'; For Fill-blank: the expected answer text
+    correct_answer = db.Column(db.String(200), nullable=False)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -146,12 +146,12 @@ class Question(db.Model):
 
 
 class Attempt(db.Model):
-    """Attempt model - one attempt per student per exam"""
+    """Attempt model - one attempt per student per assessment"""
     __tablename__ = 'attempts'
 
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
-    exam_id = db.Column(db.Integer, db.ForeignKey('exams.id'), nullable=False)
+    assessment_id = db.Column(db.Integer, db.ForeignKey('assessments.id'), nullable=False)
 
     status = db.Column(db.String(20), default='in_progress')  # in_progress or submitted
 
@@ -165,9 +165,9 @@ class Attempt(db.Model):
     # Relationships
     answers = db.relationship('Answer', backref='attempt', lazy=True, cascade='all, delete-orphan')
 
-    # Unique constraint - one attempt per student per exam
+    # Unique constraint - one attempt per student per assessment
     __table_args__ = (
-        db.UniqueConstraint('student_id', 'exam_id', name='unique_student_exam_attempt'),
+        db.UniqueConstraint('student_id', 'assessment_id', name='unique_student_assessment_attempt'),
     )
 
     def calculate_grade(self):
@@ -184,7 +184,7 @@ class Attempt(db.Model):
             self.grade = 'F'
 
     def __repr__(self):
-        return f'<Attempt {self.id} - Student {self.student_id} - Exam {self.exam_id}>'
+        return f'<Attempt {self.id} - Student {self.student_id} - Assessment {self.assessment_id}>'
 
 
 class Answer(db.Model):
@@ -195,7 +195,7 @@ class Answer(db.Model):
     attempt_id = db.Column(db.Integer, db.ForeignKey('attempts.id'), nullable=False)
     question_id = db.Column(db.Integer, db.ForeignKey('questions.id'), nullable=False)
 
-    answer_text = db.Column(db.String(10))  # 'A', 'B', 'C', 'D', 'True', or 'False'
+    answer_text = db.Column(db.String(200))  # 'A', 'B', 'C', 'D', 'True', 'False', or text for fill-blank
     is_correct = db.Column(db.Boolean, default=False)
     marks_obtained = db.Column(db.Float, default=0.0)
 
