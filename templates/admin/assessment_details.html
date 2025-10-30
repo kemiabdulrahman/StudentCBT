@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}{{ assessment.title }} - Assessment Details{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <a href="{{ url_for('admin.assessments') }}" class="text-green-600 hover:text-green-800 mb-4 inline-block">
+        <i class="fas fa-arrow-left mr-2"></i>Back to Assessments
+    </a>
+    <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">{{ assessment.title }}</h1>
+            <p class="text-gray-600 mt-2">{{ assessment.school_class.name }} - {{ assessment.subject.name }}</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{{ url_for('admin.edit_assessment', assessment_id=assessment.id) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition">
+                <i class="fas fa-edit mr-2"></i>Edit
+            </a>
+            {% if assessment.status == 'draft' %}
+            <form method="POST" action="{{ url_for('admin.publish_assessment', assessment_id=assessment.id) }}" class="inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition" onclick="return confirm('Publish this assessment?');">
+                    <i class="fas fa-check-circle mr-2"></i>Publish
+                </button>
+            </form>
+            {% elif assessment.status == 'published' %}
+            <form method="POST" action="{{ url_for('admin.close_assessment', assessment_id=assessment.id) }}" class="inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition" onclick="return confirm('Close this assessment? Students will no longer be able to take it.');">
+                    <i class="fas fa-lock mr-2"></i>Close
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm">Questions</p>
+                <p class="text-2xl font-bold text-gray-800">{{ assessment.questions|length }}</p>
+            </div>
+            <i class="fas fa-question-circle text-green-600 text-3xl"></i>
+        </div>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm">Total Marks</p>
+                <p class="text-2xl font-bold text-gray-800">{{ assessment.total_marks }}</p>
+            </div>
+            <i class="fas fa-star text-blue-600 text-3xl"></i>
+        </div>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-yellow-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm">Duration</p>
+                <p class="text-2xl font-bold text-gray-800">{{ assessment.duration_minutes }}<span class="text-sm">min</span></p>
+            </div>
+            <i class="fas fa-clock text-yellow-600 text-3xl"></i>
+        </div>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-purple-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm">Attempts</p>
+                <p class="text-2xl font-bold text-gray-800">{{ assessment.attempts|length }}</p>
+            </div>
+            <i class="fas fa-users text-purple-600 text-3xl"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Assessment Info and Actions -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Assessment Info -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-info-circle text-green-600 mr-2"></i>Assessment Information
+            </h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-600">Status</p>
+                    <p class="text-lg font-semibold">
+                        {% if assessment.status == 'published' %}
+                        <span class="text-green-600"><i class="fas fa-check-circle"></i> Published</span>
+                        {% elif assessment.status == 'draft' %}
+                        <span class="text-yellow-600"><i class="fas fa-edit"></i> Draft</span>
+                        {% else %}
+                        <span class="text-red-600"><i class="fas fa-lock"></i> Closed</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Pass Mark</p>
+                    <p class="text-lg font-semibold">{{ assessment.pass_mark }}%</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Results Visibility</p>
+                    <p class="text-lg font-semibold">
+                        {% if assessment.show_results %}
+                        <span class="text-green-600"><i class="fas fa-eye"></i> Enabled</span>
+                        {% else %}
+                        <span class="text-gray-600"><i class="fas fa-eye-slash"></i> Disabled</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Created</p>
+                    <p class="text-lg font-semibold">{{ assessment.created_at.strftime('%b %d, %Y') }}</p>
+                </div>
+            </div>
+            {% if assessment.description %}
+            <div class="mt-4 pt-4 border-t">
+                <p class="text-sm text-gray-600">Description</p>
+                <p class="text-gray-800">{{ assessment.description }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-md p-6 space-y-3">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">
+                <i class="fas fa-bolt text-green-600 mr-2"></i>Quick Actions
+            </h3>
+            <a href="{{ url_for('admin.add_question', assessment_id=assessment.id) }}" class="block bg-green-50 hover:bg-green-100 p-3 rounded-lg transition group">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-plus-circle text-green-600 mr-3"></i>
+                        <span class="font-medium text-gray-700">Add Question</span>
+                    </div>
+                    <i class="fas fa-arrow-right text-gray-400 group-hover:text-green-600"></i>
+                </div>
+            </a>
+            <a href="{{ url_for('admin.upload_questions', assessment_id=assessment.id) }}" class="block bg-blue-50 hover:bg-blue-100 p-3 rounded-lg transition group">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-file-upload text-blue-600 mr-3"></i>
+                        <span class="font-medium text-gray-700">Upload Questions</span>
+                    </div>
+                    <i class="fas fa-arrow-right text-gray-400 group-hover:text-blue-600"></i>
+                </div>
+            </a>
+            <a href="{{ url_for('admin.assessment_attempts', assessment_id=assessment.id) }}" class="block bg-purple-50 hover:bg-purple-100 p-3 rounded-lg transition group">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-users text-purple-600 mr-3"></i>
+                        <span class="font-medium text-gray-700">View Attempts</span>
+                    </div>
+                    <i class="fas fa-arrow-right text-gray-400 group-hover:text-purple-600"></i>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Questions List -->
+<div class="bg-white rounded-lg shadow-md p-6">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-gray-800">
+            <i class="fas fa-list text-green-600 mr-2"></i>Questions ({{ assessment.questions|length }})
+        </h2>
+        {% if assessment.questions|length > 0 %}
+        <div class="flex gap-2">
+            <a href="{{ url_for('admin.add_question', assessment_id=assessment.id) }}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition">
+                <i class="fas fa-plus mr-1"></i>Add
+            </a>
+            <a href="{{ url_for('admin.upload_questions', assessment_id=assessment.id) }}" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition">
+                <i class="fas fa-file-upload mr-1"></i>Upload
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if assessment.questions %}
+    <div class="space-y-4">
+        {% for question in assessment.questions %}
+        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center mb-2">
+                        <span class="bg-green-100 text-green-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">Q{{ question.order }}</span>
+                        {% if question.question_type == 'mcq' %}
+                        <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">Multiple Choice</span>
+                        {% elif question.question_type == 'true_false' %}
+                        <span class="bg-purple-100 text-purple-800 text-xs font-semibold px-2.5 py-0.5 rounded">True/False</span>
+                        {% elif question.question_type == 'fill_blank' %}
+                        <span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded">Fill-in-the-Blank</span>
+                        {% endif %}
+                        <span class="ml-2 text-xs text-gray-600">{{ question.marks }} marks</span>
+                    </div>
+                    <p class="text-gray-800 mb-2">{{ question.question_text }}</p>
+                    {% if question.question_type == 'mcq' %}
+                    <div class="grid grid-cols-2 gap-2 text-sm text-gray-600 ml-4">
+                        <div>A) {{ question.option_a }}</div>
+                        <div>B) {{ question.option_b }}</div>
+                        <div>C) {{ question.option_c }}</div>
+                        <div>D) {{ question.option_d }}</div>
+                    </div>
+                    {% endif %}
+                    <p class="text-sm text-green-600 mt-2"><i class="fas fa-check"></i> Answer: <strong>{{ question.correct_answer }}</strong></p>
+                </div>
+                <div class="flex gap-2 ml-4">
+                    <a href="{{ url_for('admin.edit_question', question_id=question.id) }}" class="text-yellow-600 hover:text-yellow-800" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <form method="POST" action="{{ url_for('admin.delete_question', question_id=question.id) }}" class="inline" onsubmit="return confirm('Delete this question?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="text-red-600 hover:text-red-800" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-12">
+        <i class="fas fa-question-circle text-gray-300 text-6xl mb-4"></i>
+        <p class="text-gray-500 text-lg">No questions added yet</p>
+        <p class="text-gray-400 text-sm mt-2 mb-4">Add questions manually or upload from a document</p>
+        <div class="flex gap-3 justify-center">
+            <a href="{{ url_for('admin.add_question', assessment_id=assessment.id) }}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition">
+                <i class="fas fa-plus mr-2"></i>Add Question
+            </a>
+            <a href="{{ url_for('admin.upload_questions', assessment_id=assessment.id) }}" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition">
+                <i class="fas fa-file-upload mr-2"></i>Upload Questions
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

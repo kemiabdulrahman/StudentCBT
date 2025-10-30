@@ -32,6 +32,7 @@ def dashboard():
     total_students = Student.query.count()
     total_classes = SchoolClass.query.count()
     total_subjects = Subject.query.count()
+    total_assessments = Assessment.query.count()
 
     # Get recent classes for display
     classes = SchoolClass.query.order_by(SchoolClass.id.desc()).limit(6).all()
@@ -40,6 +41,7 @@ def dashboard():
                          total_students=total_students,
                          total_classes=total_classes,
                          total_subjects=total_subjects,
+                         total_assessments=total_assessments,
                          classes=classes)
 
 

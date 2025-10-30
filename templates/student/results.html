@@ -5,18 +5,18 @@
 {% block content %}
 <div class="mb-8">
     <h1 class="text-3xl font-bold text-gray-800">My Results</h1>
-    <p class="text-gray-600 mt-2">View all your published exam results</p>
+    <p class="text-gray-600 mt-2">View all your published assessment results</p>
 </div>
 
 <div class="bg-white rounded-lg shadow-md p-6">
     {% if results %}
     <div class="space-y-6">
         {% for result in results %}
-        <div class="border-2 {% if result.percentage >= result.attempt.exam.pass_mark %}border-green-200{% else %}border-red-200{% endif %} rounded-lg p-6 hover:shadow-lg transition">
+        <div class="border-2 {% if result.percentage >= result.attempt.assessment.pass_mark %}border-green-200{% else %}border-red-200{% endif %} rounded-lg p-6 hover:shadow-lg transition">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">{{ result.attempt.exam.title }}</h3>
-                    <p class="text-gray-600 mb-4">{{ result.attempt.exam.subject.name }} - {{ result.attempt.exam.school_class.name }}</p>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">{{ result.attempt.assessment.title }}</h3>
+                    <p class="text-gray-600 mb-4">{{ result.attempt.assessment.subject.name }} - {{ result.attempt.assessment.school_class.name }}</p>
                     
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                         <div>
@@ -25,7 +25,7 @@
                         </div>
                         <div>
                             <p class="text-xs text-gray-500">Percentage</p>
-                            <p class="text-lg font-bold {% if result.percentage >= result.attempt.exam.pass_mark %}text-green-600{% else %}text-red-600{% endif %}">
+                            <p class="text-lg font-bold {% if result.percentage >= result.attempt.assessment.pass_mark %}text-green-600{% else %}text-red-600{% endif %}">
                                 {{ "%.1f"|format(result.percentage) }}%
                             </p>
                         </div>

@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Taking Exam - {{ attempt.exam.title }}{% endblock %}
+{% block title %}Taking Assessment - {{ attempt.assessment.title }}{% endblock %}
 
 {% block content %}
 <div class="mb-6">
     <div class="flex items-center justify-between flex-wrap gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-gray-800">{{ attempt.exam.title }}</h1>
-            <p class="text-gray-600">{{ attempt.exam.subject.name }} - Attempt #{{ attempt.attempt_number }}</p>
+            <h1 class="text-2xl font-bold text-gray-800">{{ attempt.assessment.title }}</h1>
+            <p class="text-gray-600">{{ attempt.assessment.subject.name }} - Attempt #{{ attempt.attempt_number }}</p>
         </div>
         <div class="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-xl shadow-lg text-center min-w-[160px]">
             <p class="text-sm tracking-wide uppercase">Time Remaining</p>
@@ -139,7 +139,7 @@
             
             <button onclick="submitExam()" 
                 class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition">
-                <i class="fas fa-paper-plane mr-2"></i>Submit Exam
+                <i class="fas fa-paper-plane mr-2"></i>Submit Assessment
             </button>
             
             <p class="text-xs text-gray-500 text-center mt-3">
@@ -149,7 +149,7 @@
     </div>
 </div>
 
-<form id="submitForm" method="POST" action="{{ url_for('student.submit_exam', attempt_id=attempt.id) }}" style="display:none;">
+<form id="submitForm" method="POST" action="{{ url_for('student.submit_assessment', attempt_id=attempt.id) }}" style="display:none;">
     {{ form.hidden_tag() if form else '' }}
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 </form>
@@ -182,7 +182,7 @@ function updateTimer() {
     }
     
     if (remainingSeconds <= 0) {
-        alert('Time is up! Submitting your exam...');
+        alert('Time is up! Submitting your assessment...');
         document.getElementById('submitForm').submit();
         return;
     }
@@ -248,7 +248,7 @@ function saveAnswer(questionId, answer) {
 
 // Submit
 function submitExam() {
-    if (confirm('Submit your exam? You cannot change your answers after submission.')) {
+    if (confirm('Submit your assessment? You cannot change your answers after submission.')) {
         window.removeEventListener('beforeunload', beforeUnloadHandler);
         document.getElementById('submitForm').submit();
     }

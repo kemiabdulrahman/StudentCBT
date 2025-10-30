@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Assessments - Admin{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+                <div class="bg-gradient-to-br from-green-600 to-green-800 p-3 rounded-xl shadow-lg mr-4">
+                    <i class="fas fa-file-alt text-white text-2xl"></i>
+                </div>
+                Assessments
+            </h1>
+            <p class="text-gray-600 mt-2 ml-16">Manage all assessments and tests</p>
+        </div>
+        <a href="{{ url_for('admin.create_assessment') }}" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition flex items-center">
+            <i class="fas fa-plus mr-2"></i>Create New Assessment
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm">Total</p>
+                <p class="text-2xl font-bold text-gray-800">{{ assessments|length }}</p>
+            </div>
+            <div class="bg-green-100 p-3 rounded-lg">
+                <i class="fas fa-file-alt text-green-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm">Published</p>
+                <p class="text-2xl font-bold text-gray-800">{{ assessments|selectattr('status', 'equalto', 'published')|list|length }}</p>
+            </div>
+            <div class="bg-blue-100 p-3 rounded-lg">
+                <i class="fas fa-check-circle text-blue-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-yellow-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm">Draft</p>
+                <p class="text-2xl font-bold text-gray-800">{{ assessments|selectattr('status', 'equalto', 'draft')|list|length }}</p>
+            </div>
+            <div class="bg-yellow-100 p-3 rounded-lg">
+                <i class="fas fa-edit text-yellow-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-red-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-gray-600 text-sm">Closed</p>
+                <p class="text-2xl font-bold text-gray-800">{{ assessments|selectattr('status', 'equalto', 'closed')|list|length }}</p>
+            </div>
+            <div class="bg-red-100 p-3 rounded-lg">
+                <i class="fas fa-lock text-red-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assessments List -->
+<div class="bg-white rounded-lg shadow-md p-6">
+    {% if assessments %}
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assessment</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Questions</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for assessment in assessments %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-file-alt text-green-600"></i>
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">{{ assessment.title }}</div>
+                                <div class="text-xs text-gray-500">Created {{ assessment.created_at.strftime('%b %d, %Y') }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ assessment.subject.name }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ assessment.school_class.name }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ assessment.duration_minutes }} mins</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                        <span class="text-sm font-bold text-gray-900">{{ assessment.questions|length }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if assessment.status == 'published' %}
+                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            <i class="fas fa-check-circle mr-1"></i> Published
+                        </span>
+                        {% elif assessment.status == 'draft' %}
+                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            <i class="fas fa-edit mr-1"></i> Draft
+                        </span>
+                        {% elif assessment.status == 'closed' %}
+                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                            <i class="fas fa-lock mr-1"></i> Closed
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="{{ url_for('admin.assessment_details', assessment_id=assessment.id) }}" class="text-blue-600 hover:text-blue-900 mr-3" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{ url_for('admin.edit_assessment', assessment_id=assessment.id) }}" class="text-yellow-600 hover:text-yellow-900 mr-3" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{{ url_for('admin.assessment_attempts', assessment_id=assessment.id) }}" class="text-green-600 hover:text-green-900" title="View Attempts">
+                            <i class="fas fa-users"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-12">
+        <i class="fas fa-file-alt text-gray-300 text-6xl mb-4"></i>
+        <p class="text-gray-500 text-lg">No assessments created yet</p>
+        <p class="text-gray-400 text-sm mt-2 mb-4">Create your first assessment to get started</p>
+        <a href="{{ url_for('admin.create_assessment') }}" class="inline-block bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition">
+            <i class="fas fa-plus mr-2"></i>Create Assessment
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

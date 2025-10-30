@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Assessment Result - {{ attempt.assessment.title }}{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Assessment Results</h1>
+            <p class="text-gray-600 mt-2">{{ attempt.assessment.title }}</p>
+        </div>
+        <a href="{{ url_for('student.export_my_answer_sheet', attempt_id=attempt.id) }}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition flex items-center">
+            <i class="fas fa-file-pdf mr-2"></i>Download Answer Sheet
+        </a>
+    </div>
+</div>
+
+<!-- Result Summary -->
+<div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-8 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 text-center">
+        <div>
+            <p class="text-blue-100 text-sm mb-1">Subject</p>
+            <p class="text-2xl font-bold">{{ attempt.assessment.subject.name }}</p>
+        </div>
+        <div>
+            <p class="text-blue-100 text-sm mb-1">Score</p>
+            <p class="text-3xl font-bold">{{ attempt.total_score }}/{{ attempt.assessment.total_marks }}</p>
+        </div>
+        <div>
+            <p class="text-blue-100 text-sm mb-1">Percentage</p>
+            <p class="text-3xl font-bold">{{ "%.1f"|format(attempt.percentage) }}%</p>
+        </div>
+        <div>
+            <p class="text-blue-100 text-sm mb-1">Grade</p>
+            <p class="text-4xl font-bold">{{ attempt.grade }}</p>
+        </div>
+        <div>
+            <p class="text-blue-100 text-sm mb-1">Result</p>
+            {% if attempt.percentage >= attempt.assessment.pass_mark %}
+            <p class="text-3xl font-bold text-green-200">
+                <i class="fas fa-check-circle"></i> PASS
+            </p>
+            {% else %}
+            <p class="text-3xl font-bold text-red-200">
+                <i class="fas fa-times-circle"></i> FAIL
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Additional Info -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-4">
+        <p class="text-gray-600 text-sm">Pass Mark</p>
+        <p class="text-2xl font-bold text-gray-800">{{ attempt.assessment.pass_mark }}%</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-4">
+        <p class="text-gray-600 text-sm">Submitted At</p>
+        <p class="text-lg font-semibold text-gray-800">{{ attempt.submitted_at.strftime('%b %d, %Y %H:%M') if attempt.submitted_at else 'N/A' }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-4">
+        <p class="text-gray-600 text-sm">Time Taken</p>
+        <p class="text-lg font-semibold text-gray-800">
+            {% if attempt.submitted_at and attempt.started_at %}
+            {{ ((attempt.submitted_at - attempt.started_at).seconds // 60) }} minutes
+            {% else %}
+            N/A
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<!-- Question-by-Question Breakdown -->
+<div class="bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+        <i class="fas fa-list-ol text-blue-600 mr-2"></i>Your Answers
+    </h2>
+    <div class="space-y-4">
+        {% for answer in answers %}
+        <div class="p-4 rounded-lg border transition {% if answer.is_correct %}border-green-300 bg-green-50{% else %}border-red-300 bg-red-50{% endif %}">
+            <div class="flex items-start justify-between mb-2">
+                <div class="flex-1">
+                    <div class="flex items-center mb-2">
+                        <span class="bg-gray-200 text-gray-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">Q{{ loop.index }}</span>
+                        {% if answer.question.question_type == 'mcq' %}
+                        <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">MCQ</span>
+                        {% elif answer.question.question_type == 'true_false' %}
+                        <span class="bg-purple-100 text-purple-800 text-xs font-semibold px-2.5 py-0.5 rounded">True/False</span>
+                        {% elif answer.question.question_type == 'fill_blank' %}
+                        <span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded">Fill-in-the-Blank</span>
+                        {% endif %}
+                        <span class="ml-2 text-xs text-gray-600">{{ answer.question.marks }} marks</span>
+                    </div>
+                    <p class="font-medium text-gray-800 mb-2">{{ answer.question.question_text }}</p>
+
+                    {% if answer.question.question_type == 'mcq' %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 ml-4 mb-2">
+                        <div class="{% if answer.question.correct_answer == 'A' %}font-bold text-green-700{% endif %}">A) {{ answer.question.option_a }}</div>
+                        <div class="{% if answer.question.correct_answer == 'B' %}font-bold text-green-700{% endif %}">B) {{ answer.question.option_b }}</div>
+                        <div class="{% if answer.question.correct_answer == 'C' %}font-bold text-green-700{% endif %}">C) {{ answer.question.option_c }}</div>
+                        <div class="{% if answer.question.correct_answer == 'D' %}font-bold text-green-700{% endif %}">D) {{ answer.question.option_d }}</div>
+                    </div>
+                    {% endif %}
+
+                    <div class="text-sm">
+                        <p class="{% if answer.is_correct %}text-green-700{% else %}text-red-700{% endif %} font-semibold">
+                            <i class="fas {% if answer.is_correct %}fa-check-circle{% else %}fa-times-circle{% endif %} mr-1"></i>
+                            Your Answer: <strong>{{ answer.answer_text or 'Not Answered' }}</strong>
+                        </p>
+                        {% if not answer.is_correct %}
+                        <p class="text-green-700 font-semibold mt-1">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            Correct Answer: <strong>{{ answer.question.correct_answer }}</strong>
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="ml-4 text-center">
+                    <div class="px-3 py-1 rounded-full {% if answer.is_correct %}bg-green-200 text-green-800{% else %}bg-red-200 text-red-800{% endif %}">
+                        <span class="font-bold">{{ answer.marks_obtained }}/{{ answer.question.marks }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Actions -->
+<div class="flex items-center justify-center gap-4 mt-8">
+    <a href="{{ url_for('student.dashboard') }}" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition">
+        <i class="fas fa-home mr-2"></i>Back to Dashboard
+    </a>
+    <a href="{{ url_for('student.export_my_answer_sheet', attempt_id=attempt.id) }}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition">
+        <i class="fas fa-download mr-2"></i>Download Full Report
+    </a>
+</div>
+
+{% endblock %}

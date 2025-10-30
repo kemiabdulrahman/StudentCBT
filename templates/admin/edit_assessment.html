@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Assessment - Admin{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+        <div class="bg-gradient-to-br from-yellow-600 to-yellow-800 p-3 rounded-xl shadow-lg mr-4">
+            <i class="fas fa-edit text-white text-2xl"></i>
+        </div>
+        Edit Assessment
+    </h1>
+    <p class="text-gray-600 mt-2 ml-16">Update assessment details for: <strong>{{ assessment.title }}</strong></p>
+</div>
+
+<div class="max-w-4xl">
+    <div class="bg-white rounded-lg shadow-md p-8">
+        <form method="POST" action="{{ url_for('admin.edit_assessment', assessment_id=assessment.id) }}">
+            {{ form.hidden_tag() }}
+
+            <!-- Assessment Title -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-heading text-yellow-600 mr-2"></i>Assessment Title *
+                </label>
+                {{ form.title(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent") }}
+                {% if form.title.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.title.errors[0] }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Description -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="fas fa-align-left text-yellow-600 mr-2"></i>Description (Optional)
+                </label>
+                {{ form.description(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent", rows="3") }}
+                {% if form.description.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.description.errors[0] }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Subject and Class Row -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-book text-yellow-600 mr-2"></i>Subject *
+                    </label>
+                    {{ form.subject_id(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent") }}
+                    {% if form.subject_id.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.subject_id.errors[0] }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-door-open text-yellow-600 mr-2"></i>Class *
+                    </label>
+                    {{ form.class_id(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent") }}
+                    {% if form.class_id.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.class_id.errors[0] }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Duration and Pass Mark Row -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-clock text-yellow-600 mr-2"></i>Duration (Minutes) *
+                    </label>
+                    {{ form.duration_minutes(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent") }}
+                    {% if form.duration_minutes.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.duration_minutes.errors[0] }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-percent text-yellow-600 mr-2"></i>Pass Mark (%) *
+                    </label>
+                    {{ form.pass_mark(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent") }}
+                    {% if form.pass_mark.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ form.pass_mark.errors[0] }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Show Results Toggle -->
+            <div class="mb-6">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <label class="flex items-center cursor-pointer">
+                        {{ form.show_results(class="mr-3 h-5 w-5 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded") }}
+                        <div>
+                            <span class="block text-sm font-medium text-gray-900">
+                                <i class="fas fa-eye text-blue-600 mr-2"></i>Allow students to view results after submission
+                            </span>
+                            <span class="block text-xs text-gray-600 mt-1">
+                                If unchecked, students will see a confirmation message but won't see their scores.
+                            </span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Scheduling (Optional) -->
+            <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-calendar text-yellow-600 mr-2"></i>Scheduling (Optional)
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Start Date & Time</label>
+                        {{ form.scheduled_start(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent", type="datetime-local") }}
+                        {% if form.scheduled_start.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.scheduled_start.errors[0] }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">End Date & Time</label>
+                        {{ form.scheduled_end(class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent", type="datetime-local") }}
+                        {% if form.scheduled_end.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.scheduled_end.errors[0] }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                <a href="{{ url_for('admin.assessment_details', assessment_id=assessment.id) }}" class="text-gray-600 hover:text-gray-800 font-medium">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Details
+                </a>
+                <button type="submit" class="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition">
+                    <i class="fas fa-save mr-2"></i>Update Assessment
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

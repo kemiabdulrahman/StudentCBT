@@ -11,30 +11,30 @@
 <div class="grid grid-cols-1 gap-6">
     {% if exams %}
         {% for item in exams %}
-        {% set start_nigeria = item.exam.scheduled_start.replace(tzinfo=utc).astimezone(ZoneInfo('Africa/Lagos')) if item.exam.scheduled_start else None %}
-        {% set end_nigeria = item.exam.scheduled_end.replace(tzinfo=utc).astimezone(ZoneInfo('Africa/Lagos')) if item.exam.scheduled_end else None %}
+        {% set start_nigeria = item.assessment.scheduled_start.replace(tzinfo=utc).astimezone(ZoneInfo('Africa/Lagos')) if item.assessment.scheduled_start else None %}
+        {% set end_nigeria = item.assessment.scheduled_end.replace(tzinfo=utc).astimezone(ZoneInfo('Africa/Lagos')) if item.assessment.scheduled_end else None %}
         {% set is_active = start_nigeria and end_nigeria and start_nigeria <= now <= end_nigeria %}
         <div class="bg-white rounded-lg shadow-md p-6 border-l-4 {% if is_active %} border-green-500 {% else %} border-blue-500 {% endif %}">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">{{ item.exam.title }}</h3>
-                    <p class="text-gray-600 mb-4">{{ item.exam.description }}</p>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">{{ item.assessment.title }}</h3>
+                    <p class="text-gray-600 mb-4">{{ item.assessment.description }}</p>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
                         <div class="flex items-center">
                             <i class="fas fa-book text-blue-500 mr-2"></i>
-                            <span>{{ item.exam.subject.name }}</span>
+                            <span>{{ item.assessment.subject.name }}</span>
                         </div>
                         <div class="flex items-center">
                             <i class="fas fa-question-circle text-green-500 mr-2"></i>
-                            <span>{{ item.exam.questions|length }} questions</span>
+                            <span>{{ item.assessment.questions|length }} questions</span>
                         </div>
                         <div class="flex items-center">
                             <i class="fas fa-clock text-yellow-500 mr-2"></i>
-                            <span>{{ item.exam.duration_minutes }} minutes</span>
+                            <span>{{ item.assessment.duration_minutes }} minutes</span>
                         </div>
                         <div class="flex items-center">
                             <i class="fas fa-award text-purple-500 mr-2"></i>
-                            <span>{{ item.exam.total_marks }} marks</span>
+                            <span>{{ item.assessment.total_marks }} marks</span>
                         </div>
                     </div>
                     {% if start_nigeria and end_nigeria %}
@@ -46,7 +46,7 @@
                     <div class="flex items-center gap-4 text-sm">
                         <span class="text-gray-600">
                             <i class="fas fa-redo mr-1"></i>
-                            Attempts: {{ item.attempt_count }}/{{ item.exam.max_attempts if item.exam.allow_multiple_attempts else 1 }}
+                            Attempts: {{ item.attempt_count }}/{{ item.assessment.max_attempts if item.assessment.allow_multiple_attempts else 1 }}
                         </span>
                         {% if not item.can_attempt %}
                         <span class="text-red-600 font-semibold">
@@ -60,10 +60,10 @@
                         {% endif %}
                     </div>
                 </div>
-                <a href="{{ url_for('student.exam_info', exam_id=item.exam.id) }}" 
+                <a href="{{ url_for('student.assessment_info', exam_id=item.assessment.id) }}" 
                    class="ml-4 px-6 py-3 rounded-lg font-medium transition
                    {% if not item.can_attempt %} bg-gray-400 cursor-not-allowed {% else %} bg-blue-600 hover:bg-blue-700 text-white {% endif %}">
-                    <i class="fas fa-arrow-right mr-2"></i>View Exam
+                    <i class="fas fa-arrow-right mr-2"></i>View Assessment
                 </a>
             </div>
         </div>
